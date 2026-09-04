@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.20)
+project(hyprroll VERSION 0.1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+find_package(Qt6 REQUIRED COMPONENTS Quick Gui Core)
+find_package(LayerShellQt QUIET)
+
+qt_add_executable(hyprroll-cpp
+    src/main.cpp
+)
+
+qt_add_qml_module(hyprroll-cpp
+    URI hyprroll
+    VERSION 1.0
+    QML_FILES
+        qml/Main.qml
+        qml/Carousel.qml
+        qml/ColorFilter.qml
+        qml/WallpaperDelegate.qml
+)
+
+target_link_libraries(hyprroll-cpp PRIVATE Qt6::Quick Qt6::Gui Qt6::Core)
+if(LayerShellQt_FOUND)
+    target_link_libraries(hyprroll-cpp PRIVATE LayerShellQt::Interface)
+    target_compile_definitions(hyprroll-cpp PRIVATE HAS_LAYER_SHELL=1)
+endif()
+
+install(TARGETS hyprroll-cpp DESTINATION bin)
