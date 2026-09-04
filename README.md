@@ -12,7 +12,7 @@ A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers i
 - Smooth `60Hz` lerp (`contentX *0.15`, `visualSelection *0.22`)
 - Name search — case-insensitive, live, `Ctrl+F`/`/` to toggle, `Esc` to clear (window stays)
 - Thumbnail cache `x500` via ImageMagick + `metadata.json` (LAB `k-means`)
-- `j`/`→` `k`/`←` `d`/`u` `Enter`/`Space` `Esc` `wheel` `drag` `click` with circular wrap
+- `h`/`←` `l`/`→` `d`/`u` `Enter`/`Space` `Esc` `wheel` `drag` `click` with circular wrap
 - `LayerShell` overlay `1920x1080` transparent, `1200x678` centered content, `lavender #b4befe` border `4px`
 
 ## Requirements
@@ -64,7 +64,7 @@ hyprroll
 ./scripts/cache.sh ~/Projects/hyprroll
 ```
 
-Controls: `j/→` next, `k/←` prev, `d` +5, `u` -5, `Enter`/`Space` apply, `Esc` quit, `Ctrl+F`/`/` search, `Esc` in search clears, wheel/drag.
+Controls: `h/←` prev, `l/→` next, `d` +5, `u` -5, `Enter`/`Space` apply, `Esc` quit, `Ctrl+F`/`/` search, `Esc` in search clears, wheel/drag.
 
 Wallpaper via:
 
@@ -100,6 +100,14 @@ awww img <path> --transition-type grow --transition-pos 0.5,0.5 --transition-dur
 ```
 
 Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.webp` `.bmp`), cache `~/.cache/hyprroll/thumbs`.
+
+## Backends
+
+| Backend | Status |
+|---------|--------|
+| awww | available |
+
+Future backends possible — PRs welcomed.
 
 ## Structure
 
