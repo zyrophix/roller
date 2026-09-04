@@ -2,16 +2,18 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import org.kde.layershell 1.0 as LayerShell
 
 ApplicationWindow {
     id: win
     title: "hyprroll"
-    width: Screen.width
-    height: Screen.height
+    property bool useLayerShell: config ? config.useLayerShell : false
+    width: useLayerShell ? 1200 : Screen.width
+    height: useLayerShell ? 678 : Screen.height
     visible: true
-    visibility: Window.FullScreen
-    color: "transparent"
-    flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+    visibility: useLayerShell ? Window.Windowed : Window.FullScreen
+    color: useLayerShell ? "#1e1e2e" : "transparent"
+    flags: Qt.FramelessWindowHint | (useLayerShell ? 0 : Qt.WindowStaysOnTopHint)
 
     property int selectedIndex: 0
     property int prevCount: 0
@@ -182,6 +184,13 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
+        if (useLayerShell) {
+            LayerShell.Window.layer = LayerShell.Window.LayerOverlay
+            LayerShell.Window.anchors = LayerShell.Window.AnchorNone
+            LayerShell.Window.exclusionZone = -1
+            LayerShell.Window.keyboardInteractivity = LayerShell.Window.KeyboardInteractivityExclusive
+            LayerShell.Window.scope = "hyprroll"
+        }
         keyHandler.forceActiveFocus()
     }
 

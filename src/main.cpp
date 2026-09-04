@@ -32,9 +32,7 @@ int main(int argc, char *argv[]) {
     QGuiApplication app(argc, argv);
     app.setApplicationName("hyprroll");
     app.setDesktopFileName("hyprroll");
-#ifdef HAS_LAYER_SHELL
-    LayerShellQt::Shell::useLayerShell();
-#endif
+    // LayerShell is handled in QML via org.kde.layershell when use_layer_shell is true
     QString appDir = QCoreApplication::applicationDirPath();
     QString qmlPath = QDir(appDir).filePath("../qml/Main.qml");
     if (!QFile::exists(qmlPath)) qmlPath = QDir::current().filePath("qml/Main.qml");
