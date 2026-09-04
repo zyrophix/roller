@@ -4,7 +4,7 @@
 
 A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers in a centered carousel, search by filename, and apply instantly with `awww` — pure `QML` + `C++` `LayerShell` overlay.
 
-![Hyprland 0.56 + awww](https://codeberg.org/LGFae/awww)
+![hyprroll](assets/demo.png)
 
 [![CI](https://github.com/zyrophix/hyprroll/actions/workflows/ci.yml/badge.svg)](https://github.com/zyrophix/hyprroll/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Qt 6.5+](https://img.shields.io/badge/Qt-6.5%2B-green.svg)](https://www.qt.io) [![Hyprland 0.56+](https://img.shields.io/badge/Hyprland-0.56%2B-blue.svg)](https://hyprland.org)
 

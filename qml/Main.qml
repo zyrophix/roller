@@ -150,8 +150,8 @@ ApplicationWindow {
                 event.accepted = true
                 return
             }
-            if (key === "j" || k === Qt.Key_Right) { carousel.next(); event.accepted = true }
-            else if (key === "k" || k === Qt.Key_Left) { carousel.prev(); event.accepted = true }
+            if (key === "l" || k === Qt.Key_Right) { carousel.next(); event.accepted = true }
+            else if (key === "h" || k === Qt.Key_Left) { carousel.prev(); event.accepted = true }
             else if (key === "d") { carousel.jumpForward(); event.accepted = true }
             else if (key === "u") { carousel.jumpBack(); event.accepted = true }
             else if (k === Qt.Key_Return || k === Qt.Key_Enter || key === " ") { win.applySelected(); event.accepted = true }
