@@ -8,12 +8,11 @@ A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers i
 
 ## Features
 
-- Horizontal carousel with centered selection — `5` visible, `500px` panel, `1.6x`/`1.1x` expansion, shear `-0.3` (parallelogram clip, cover-fit)
-- Smooth `60Hz` lerp (`contentX *0.15`, `visualSelection *0.22`)
-- Name search — case-insensitive, live, `Ctrl+F`/`/` to toggle, `Esc` to clear (window stays)
-- Thumbnail cache `x500` via ImageMagick + `metadata.json` (LAB `k-means`)
-- `h`/`←` `l`/`→` `d`/`u` `Enter`/`Space` `Esc` `wheel` `drag` `click` with circular wrap
-- `LayerShell` overlay `1920x1080` transparent, `1200x678` centered content, `lavender #b4befe` border `4px`
+- Centered carousel with smooth animations
+- Search by filename (`Ctrl+F` / `/`)
+- Thumbnail cache with dominant color detection
+- Keyboard, wheel, drag and click navigation
+- LayerShell overlay — doesn't disturb tiling
 - `<1MB` binary, `~22ms` cold start
 
 ## Backends
