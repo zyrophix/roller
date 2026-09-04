@@ -103,6 +103,10 @@ class Config(QObject):
     def carouselSelectedBorder(self):
         return self._data.get("carousel_selected_border", "#b4befe")
 
+    @Property(bool, notify=showSearchHintChanged)
+    def useLayerShell(self):
+        return bool(self._data.get("use_layer_shell", False))
+
     # Transition — defaults are grow 0.5,0.5 1.2 60 as requested, but any awww type is allowed
     @Property(str, notify=searchHintChanged)
     def transitionType(self):

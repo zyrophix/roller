@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import org.kde.layershell 1.0 as LayerShell
 
 ApplicationWindow {
     id: win
@@ -9,9 +10,14 @@ ApplicationWindow {
     width: Screen.width
     height: Screen.height
     visible: true
-    visibility: Window.FullScreen
     color: "transparent"
-    flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+    flags: Qt.FramelessWindowHint
+    // LayerShell overlay fullscreen transparent — covers but doesn't shift windows
+    LayerShell.Window.layer: LayerShell.Window.LayerOverlay
+    LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
+    LayerShell.Window.exclusionZone: -1
+    LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityExclusive
+    LayerShell.Window.scope: "hyprroll"
 
     property int selectedIndex: 0
     property int prevCount: 0

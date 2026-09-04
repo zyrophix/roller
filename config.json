@@ -20,5 +20,5 @@
     "transition_fps": 60,
     "cache_batch_size": 20,
     "backend": "awww",
-    "use_layer_shell": false
+    "use_layer_shell": true
 }
