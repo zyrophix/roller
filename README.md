@@ -14,6 +14,15 @@ A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers i
 - Thumbnail cache `x500` via ImageMagick + `metadata.json` (LAB `k-means`)
 - `h`/`←` `l`/`→` `d`/`u` `Enter`/`Space` `Esc` `wheel` `drag` `click` with circular wrap
 - `LayerShell` overlay `1920x1080` transparent, `1200x678` centered content, `lavender #b4befe` border `4px`
+- `<1MB` binary, `~22ms` cold start
+
+## Backends
+
+| Backend | Status |
+|---------|--------|
+| awww | available |
+
+Future backends possible — PRs welcomed.
 
 ## Requirements
 
@@ -100,14 +109,6 @@ awww img <path> --transition-type grow --transition-pos 0.5,0.5 --transition-dur
 ```
 
 Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.webp` `.bmp`), cache `~/.cache/hyprroll/thumbs`.
-
-## Backends
-
-| Backend | Status |
-|---------|--------|
-| awww | available |
-
-Future backends possible — PRs welcomed.
 
 ## Structure
 
