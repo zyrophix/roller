@@ -97,25 +97,28 @@ awww img <path> --transition-type grow --transition-pos 0.5,0.5 --transition-dur
 
 `config.json`:
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `wallpaper_path` | `~/Pictures/Wallpapers` | Wallpaper directory (recursive) |
-| `cache_path` | `~/.cache/hyprroll/thumbs` | Thumbnail cache |
-| `number_of_pictures` | `5` | Visible items (odd, 5/7/9) |
-| `border_color` | `#b4befe` | Selected border (lavender) |
-| `border_width` | `4` | Border thickness |
-| `panel_height` | `500` | Tile height |
-| `selected_horizontal_scale` | `1.6` | Selected width scale |
-| `selected_vertical_scale` | `1.1` | Selected height scale |
-| `search_background_color` | `#313244` | Search bar background |
-| `search_text_color` | `#cdd6f4` | Search text |
-| `search_hint_color` | `#a6adc8` | Hint text |
-| `search_hint_text` | `Press Ctrl + F or / to search` | Hint |
-| `show_search_hint` | `true` | Show hint |
-| `transition_type` | `grow` | awww type |
-| `transition_pos` | `0.5,0.5` | Grow center |
-| `transition_duration` | `1.2` | Seconds |
-| `transition_fps` | `60` | FPS |
+```json
+{
+  "wallpaper_path": "~/Pictures/Wallpapers",
+  "cache_path": "~/.cache/hyprroll/thumbs",
+  "number_of_pictures": 5,
+  "border_color": "#b4befe",
+  "border_width": 4,
+  "panel_height": 500,
+  "selected_horizontal_scale": 1.6,
+  "selected_vertical_scale": 1.1,
+  "search_background_color": "#313244",
+  "search_text_color": "#cdd6f4",
+  "search_hint_color": "#a6adc8",
+  "carousel_selected_border": "#b4befe",
+  "search_hint_text": "Press Ctrl + F or / to search",
+  "show_search_hint": true,
+  "transition_type": "grow",
+  "transition_pos": "0.5,0.5",
+  "transition_duration": 1.2,
+  "transition_fps": 60
+}
+```
 
 Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.webp` `.bmp`), cache `~/.cache/hyprroll/thumbs`.
 
