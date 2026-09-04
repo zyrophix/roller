@@ -10,6 +10,13 @@ find_package(LayerShellQt QUIET)
 
 qt_add_executable(hyprroll-cpp
     src/main.cpp
+    src/backend/Color.cpp
+    src/backend/Repository.cpp
+    src/backend/Metadata.cpp
+    src/backend/Model.cpp
+    src/backend/Awww.cpp
+    src/backend/Backend.cpp
+    src/backend/Config.cpp
 )
 
 qt_add_qml_module(hyprroll-cpp
