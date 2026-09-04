@@ -2,57 +2,48 @@
 
 > Inspired by [serpantinum](https://github.com/ilyamiro/serpantinum) — wallpaper picker from his Hyprland shell.
 
-A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers in a centered carousel, filter by dominant color or search by filename, and apply instantly with `awww`.
+A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers in a centered carousel, search by filename, and apply instantly with `awww` — pure `QML` + `C++` `LayerShell` overlay.
 
 ![Hyprland 0.56 + awww](https://codeberg.org/LGFae/awww)
 
 ## Features
 
-- Horizontal carousel with centered selection — `7` visible items, `500px` panel height, `1.6x` horizontal and `1.1x` vertical expansion for the selected item
-- Shear/perspective styling (`-0.3`) without distorting image content (parallelogram clip, cover-fit thumbnails)
-- Smooth animated transitions (`contentX *0.15`, `visualSelection *0.22` at 60Hz)
-- Color filtering — only groups present in the current collection are shown (LAB classification: `red`, `orange`, `yellow`, `green`, `cyan`, `blue`, `purple`, `pink`, `gray`)
-- Name search — case-insensitive, live filtering, debounced input
-- Thumbnail cache via ImageMagick (`x500`, `quality 85`) and `metadata.json` with dominant color + k-means clustering
-- Keyboard, wheel, drag and click navigation with circular wrap-around
-- Single-monitor focused, local wallpapers only, extensible to multiple backends
+- Horizontal carousel with centered selection — `5` visible, `500px` panel, `1.6x`/`1.1x` expansion, shear `-0.3` (parallelogram clip, cover-fit)
+- Smooth `60Hz` lerp (`contentX *0.15`, `visualSelection *0.22`)
+- Name search — case-insensitive, live, `Ctrl+F`/`/` to toggle, `Esc` to clear (window stays)
+- Thumbnail cache `x500` via ImageMagick + `metadata.json` (LAB `k-means`)
+- `j`/`→` `k`/`←` `d`/`u` `Enter`/`Space` `Esc` `wheel` `drag` `click` with circular wrap
+- `LayerShell` overlay `1920x1080` transparent, `1200x678` centered content, `lavender #b4befe` border `4px`
 
 ## Requirements
 
-- Hyprland 0.56+ (Lua config)
-- `awww` and `awww-daemon` (`swww` is the same project, renamed — `awww` binary is used, `swww` works via symlink)
-- `python3`, `PySide6` 6.11+, `qt6-declarative`, `jq`, `ImageMagick` (`magick`), `Pillow`
+- Hyprland 0.56+ (Lua)
+- `awww` + `awww-daemon`
+- `qt6-base`, `qt6-declarative`, `layer-shell-qt`, `jq`, `ImageMagick` (`magick`)
 
 ```bash
-sudo pacman -S python-pyside6 qt6-declarative jq imagemagick awww
-# or from AUR
-yay -S awww
+sudo pacman -S qt6-base qt6-declarative layer-shell-qt jq imagemagick awww
 ```
 
-## Installation
+## Build
 
 ```bash
-git clone <repo> ~/Projects/hyprroll
-cd ~/Projects/hyprroll
-cp config.example.json config.json
-# edit wallpaper_path if needed
-mkdir -p ~/Pictures/Wallpapers
+git clone https://github.com/zyrophix/hyprroll
+cd hyprroll
+cmake -B build -S . && cmake --build build
+install -Dm755 build/hyprroll ~/.local/bin/hyprroll
 ./scripts/cache.sh ~/Projects/hyprroll
 ```
 
-## Hyprland Setup (Lua)
+## Hyprland Setup
 
-Add to `~/.config/hypr/hyprland.lua` (see `hypr/hyprland.lua.example`):
+Add to `~/.config/hypr/hyprland.lua`:
 
 ```lua
-hl.window_rule({
-  name  = "hyprroll",
-  match = { class = "hyprroll" },
-  float = true,
-  fullscreen = true,
-  dim_around = false,
-  rounding = 0,
-  no_blur = true,
+hl.layer_rule({
+  match = { namespace = "^(hyprroll)$" },
+  blur = false,
+  ignore_alpha = 0,
 })
 
 hl.bind("SUPER + W", hl.dsp.exec_cmd("hyprroll"))
@@ -62,8 +53,6 @@ hl.on("hyprland.start", function()
 end)
 ```
 
-Reload:
-
 ```bash
 hyprctl reload
 ```
@@ -71,89 +60,62 @@ hyprctl reload
 ## Usage
 
 ```bash
-hyprroll                       # preferred — installed to ~/.local/bin/hyprroll
-python3 main.py                # direct launch
-./scripts/cache.sh ~/Projects/hyprroll  # rebuild thumbnail cache manually
+hyprroll
+./scripts/cache.sh ~/Projects/hyprroll
 ```
 
-Controls:
+Controls: `j/→` next, `k/←` prev, `d` +5, `u` -5, `Enter`/`Space` apply, `Esc` quit, `Ctrl+F`/`/` search, `Esc` in search clears, wheel/drag.
 
-| Action | Key |
-|---|---|
-| Next wallpaper | `j` / `→` |
-| Previous wallpaper | `k` / `←` |
-| Jump forward | `d` (+5) |
-| Jump backward | `u` (-5) |
-| Apply selected | `Enter` / `Space` / click selected |
-| Select | click unselected |
-| Scroll | mouse wheel, drag |
-| Search | click `⌕`, type to filter, `Esc` to exit search |
-| Filter by color | click color swatch, `◉` for all |
-| Quit | `Esc` (or click outside) |
-
-Wallpaper is applied via:
+Wallpaper via:
 
 ```bash
-awww img <path> --transition-type wipe --transition-fps 30
+awww img <path> --transition-type grow --transition-pos 0.5,0.5 --transition-duration 1.2 --transition-fps 60
 ```
 
 ## Configuration
 
-`config.json` (generated from `config.example.json`):
+`config.json`:
 
 ```json
 {
   "wallpaper_path": "~/Pictures/Wallpapers",
   "cache_path": "~/.cache/hyprroll/thumbs",
-  "number_of_pictures": 7,
-  "border_color": "#C27B63",
-  "cache_batch_size": 20,
-  "backend": "awww",
-  "transition_type": "wipe",
-  "transition_fps": 30
+  "number_of_pictures": 5,
+  "border_color": "#b4befe",
+  "border_width": 4,
+  "panel_height": 500,
+  "selected_horizontal_scale": 1.6,
+  "selected_vertical_scale": 1.1,
+  "search_background_color": "#313244",
+  "search_text_color": "#cdd6f4",
+  "search_hint_color": "#a6adc8",
+  "carousel_selected_border": "#b4befe",
+  "search_hint_text": "Press Ctrl + F or / to search",
+  "show_search_hint": true,
+  "transition_type": "grow",
+  "transition_pos": "0.5,0.5",
+  "transition_duration": 1.2,
+  "transition_fps": 60
 }
 ```
 
-- `number_of_pictures` — odd values (`5`, `7`, `9`) keep selection centered
-- `border_color` — selected tile border
-- `cache_batch_size` — parallel ImageMagick jobs
+Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.webp` `.bmp`), cache `~/.cache/hyprroll/thumbs`.
 
-Wallpapers are searched recursively (`rglob`) under `wallpaper_path`. Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.bmp`.
-
-Cache is stored in `cache_path` as `x500` thumbnails plus `metadata.json` (mtime, dominant color, color group).
-
-## Project Structure
+## Structure
 
 ```
 hyprroll/
-├── main.py               # PySide6 entry, transparent fullscreen overlay, class hyprroll
-├── qml/
-│   ├── Main.qml          # Fullscreen transparent window, centered content (678px)
-│   ├── Carousel.qml      # Repeater with exact panel geometry + Matrix4x4 shear
-│   ├── ColorFilter.qml   # Filter bar rgba(57,58,58,0.60) radius 10
-│   └── WallpaperDelegate.qml
-├── backend/
-│   ├── repository.py     # Recursive scan, filterByColor/filterByName
-│   ├── color.py          # LAB color classification (9 groups)
-│   ├── metadata.py       # Dominant color extraction (Pillow/QImage, k-means)
-│   ├── models.py         # QAbstractListModel for QML
-│   └── awww_backend.py   # awww/swww backend abstraction
-├── scripts/
-│   ├── cache.sh
-│   └── open.sh
-├── hypr/hyprland.lua.example
+├── qml/Main.qml          # LayerShell overlay fullscreen transparent, 678 centered
+├── qml/Carousel.qml      # Canvas 1.6/1.1 0.3 border 4
+├── qml/ColorFilter.qml   # Search-only bar
+├── src/main.cpp          # QGuiApplication + LayerShell
+├── src/backend/Color.cpp
+├── src/backend/Repository.cpp
+├── src/backend/Metadata.cpp
+├── src/backend/Model.cpp
+├── src/backend/Config.cpp
+├── src/backend/Awww.cpp
+├── src/backend/Backend.cpp
+├── scripts/cache.sh
 └── config.json
 ```
-
-## How It Works
-
-- `scripts/cache.sh` generates `x500` thumbnails and calls `backend.metadata` to compute dominant colors.
-- `backend.metadata` samples thumbnails at `48px`, converts to LAB, weights by chroma, clusters into `3–7` groups, and classifies via LAB distance.
-- `qml/Carousel.qml` replicates the original cairo geometry: `tileWidth = width/7 -10`, `step = tile+4`, `extra = tile*0.6`, `margin = tile*0.25`, shear `0.3*scaledH`, lerp animations.
-- `qml/ColorFilter.qml` matches `ui/color_filter.css`: `32x32` swatches, `radius 8`, selected stroke `1.9px rgba(1,1,1,0.95)`.
-
-## Roadmap
-
-- `B` variant: `Qt6 C++` + `LayerShellQt` overlay (same `qml/*`, no Python)
-- Multi-backend abstraction (`awww`, `hyprpaper`, `swww` compat)
-- Per-output wallpaper selection (currently single monitor)

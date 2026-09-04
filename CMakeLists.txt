@@ -8,7 +8,7 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt6 REQUIRED COMPONENTS Quick Gui Core)
 find_package(LayerShellQt QUIET)
 
-qt_add_executable(hyprroll-cpp
+qt_add_executable(hyprroll
     src/main.cpp
     src/backend/Color.cpp
     src/backend/Repository.cpp
@@ -19,8 +19,8 @@ qt_add_executable(hyprroll-cpp
     src/backend/Config.cpp
 )
 
-qt_add_qml_module(hyprroll-cpp
-    URI hyprroll
+qt_add_qml_module(hyprroll
+    URI Hyprroll
     VERSION 1.0
     QML_FILES
         qml/Main.qml
@@ -29,10 +29,10 @@ qt_add_qml_module(hyprroll-cpp
         qml/WallpaperDelegate.qml
 )
 
-target_link_libraries(hyprroll-cpp PRIVATE Qt6::Quick Qt6::Gui Qt6::Core)
+target_link_libraries(hyprroll PRIVATE Qt6::Quick Qt6::Gui Qt6::Core)
 if(LayerShellQt_FOUND)
-    target_link_libraries(hyprroll-cpp PRIVATE LayerShellQt::Interface)
-    target_compile_definitions(hyprroll-cpp PRIVATE HAS_LAYER_SHELL=1)
+    target_link_libraries(hyprroll PRIVATE LayerShellQt::Interface)
+    target_compile_definitions(hyprroll PRIVATE HAS_LAYER_SHELL=1)
 endif()
 
-install(TARGETS hyprroll-cpp DESTINATION bin)
+install(TARGETS hyprroll DESTINATION bin)
