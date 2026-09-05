@@ -26,7 +26,6 @@ qt_add_qml_module(hyprroll
         qml/Main.qml
         qml/Carousel.qml
         qml/ColorFilter.qml
-        qml/WallpaperDelegate.qml
 )
 
 target_link_libraries(hyprroll PRIVATE Qt6::Quick Qt6::Gui Qt6::Core)

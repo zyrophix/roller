@@ -31,11 +31,15 @@ Future backends possible — PRs welcomed.
 - `awww` + `awww-daemon`
 - `qt6-base`, `qt6-declarative`, `layer-shell-qt`, `jq`, `ImageMagick` (`magick`)
 
+## Quick start
+
+Install dependencies:
+
 ```bash
 sudo pacman -S qt6-base qt6-declarative layer-shell-qt jq imagemagick awww
 ```
 
-## Build
+Build and install:
 
 ```bash
 git clone https://github.com/zyrophix/hyprroll
@@ -44,15 +48,7 @@ cmake -B build -S . && cmake --build build
 install -Dm755 build/hyprroll ~/.local/bin/hyprroll
 ```
 
-Cache is generated automatically on first launch (`~/.cache/hyprroll/thumbs`). To rebuild manually:
-
-```bash
-./scripts/cache.sh ~/Projects/hyprroll
-```
-
-## Hyprland Setup
-
-Add to `~/.config/hypr/hyprland.lua`:
+Add to `~/.config/hypr/hyprland.lua` — rule and keybind:
 
 ```lua
 hl.layer_rule({
@@ -68,13 +64,20 @@ hl.on("hyprland.start", function()
 end)
 ```
 
-## Usage
+Reload and run:
 
 ```bash
-hyprroll
+hyprctl reload
+hyprroll          # or SUPER + W
 ```
 
-## Keybinds
+Cache is generated automatically on first launch (`~/.cache/hyprroll/thumbs`). To rebuild manually:
+
+```bash
+./scripts/cache.sh ~/Projects/hyprroll
+```
+
+### Keybinds
 
 | Key | Action |
 |-----|--------|

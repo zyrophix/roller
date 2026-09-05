@@ -34,15 +34,9 @@ int main(int argc, char *argv[]) {
     app.setDesktopFileName("hyprroll");
     // LayerShell is handled in QML via org.kde.layershell when use_layer_shell is true
     QString appDir = QCoreApplication::applicationDirPath();
-    QString qmlPath = QDir(appDir).filePath("../qml/Main.qml");
-    if (!QFile::exists(qmlPath)) qmlPath = QDir::current().filePath("qml/Main.qml");
-    if (!QFile::exists(qmlPath)) qmlPath = QDir(appDir).filePath("../../qml/Main.qml");
-    // Fallback to source dir
-    if (!QFile::exists(qmlPath)) qmlPath = QStringLiteral("/home/you/Projects/hyprroll/qml/Main.qml");
-
     QString configPath = QDir::cleanPath(QDir(appDir).filePath("../config.json"));
     if (!QFile::exists(configPath)) configPath = QDir::current().filePath("config.json");
-    if (!QFile::exists(configPath)) configPath = "/home/you/Projects/hyprroll/config.json";
+    if (!QFile::exists(configPath)) configPath = QDir::home().filePath(".config/hyprroll/config.json");
     QJsonObject cfgObj = loadConfig(configPath);
     if (cfgObj.isEmpty()) {
         // defaults
@@ -72,7 +66,20 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("wallpaperModel", &model);
     engine.rootContext()->setContextProperty("backend", &backend);
     engine.rootContext()->setContextProperty("config", &cfg);
-    engine.load(QUrl::fromLocalFile(qmlPath));
+    engine.load(QUrl(QStringLiteral("qrc:/Hyprroll/qml/Main.qml")));
+    if (engine.rootObjects().isEmpty()) {
+        QStringList fallbacks = {
+            QDir(appDir).filePath("../qml/Main.qml"),
+            QDir(appDir).filePath("../../qml/Main.qml"),
+            QDir::current().filePath("qml/Main.qml")
+        };
+        for (const QString &p : fallbacks) {
+            if (QFile::exists(p)) {
+                engine.load(QUrl::fromLocalFile(p));
+                if (!engine.rootObjects().isEmpty()) break;
+            }
+        }
+    }
     if (engine.rootObjects().isEmpty()) return 1;
     backend.refresh();
     return app.exec();

@@ -79,8 +79,6 @@ Rectangle {
 
     function setSearchMode(on) { root.searchMode = on }
     function isSearchMode() { return root.searchMode }
-    function setAvailable(c) {}
-    function setActive(c) {}
 
     onSearchModeChanged: {
         if (searchMode) searchField.forceActiveFocus()
