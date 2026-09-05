@@ -45,10 +45,13 @@ int main(int argc, char *argv[]) {
         cfgObj["number_of_pictures"] = 5;
         cfgObj["border_color"] = "#b4befe";
     }
-    QString wallpaperDir = cfgObj.value("wallpaper_path").toString(QDir::home().filePath("Pictures/Wallpapers"));
-    wallpaperDir.replace("~", QDir::homePath());
-    QString cacheDir = cfgObj.value("cache_path").toString(QDir::home().filePath(".cache/hyprroll/thumbs"));
-    cacheDir.replace("~", QDir::homePath());
+    auto expandPath = [](QString p) {
+        if (p.startsWith("~/")) p.replace(0, 1, QDir::homePath());
+        else if (p == "~") p = QDir::homePath();
+        return p;
+    };
+    QString wallpaperDir = expandPath(cfgObj.value("wallpaper_path").toString(QDir::home().filePath("Pictures/Wallpapers")));
+    QString cacheDir = expandPath(cfgObj.value("cache_path").toString(QDir::home().filePath(".cache/hyprroll/thumbs")));
     QDir().mkpath(wallpaperDir);
     QDir().mkpath(cacheDir);
 
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("wallpaperModel", &model);
     engine.rootContext()->setContextProperty("backend", &backend);
     engine.rootContext()->setContextProperty("config", &cfg);
-    engine.load(QUrl(QStringLiteral("qrc:/Hyprroll/qml/Main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Hyprroll/qml/Main.qml")));
     if (engine.rootObjects().isEmpty()) {
         QStringList fallbacks = {
             QDir(appDir).filePath("../qml/Main.qml"),

@@ -64,10 +64,9 @@ hl.on("hyprland.start", function()
 end)
 ```
 
-Reload and run:
+Run:
 
 ```bash
-hyprctl reload
 hyprroll          # or SUPER + W
 ```
 

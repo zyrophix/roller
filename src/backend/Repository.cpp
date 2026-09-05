@@ -7,7 +7,7 @@ Repository::Repository(const QString &d): dir(d) {}
 
 void Repository::refresh() {
     wallpapers.clear();
-    QDirIterator it(dir, kExts, QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator it(dir, kExts, QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         it.next();
         wallpapers << it.filePath();

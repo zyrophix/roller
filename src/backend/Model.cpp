@@ -1,6 +1,7 @@
 #include "Model.h"
 #include <QFileInfo>
 #include <QDir>
+#include <QUrl>
 
 WallpaperModel::WallpaperModel(QObject *p): QAbstractListModel(p) {}
 int WallpaperModel::rowCount(const QModelIndex &p) const { return p.isValid()?0:m_items.size(); }
@@ -24,7 +25,7 @@ void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVar
         QString name=QFileInfo(p).fileName();
         QString thumb = QDir(cacheDir).filePath(name);
         if (!QFileInfo::exists(thumb)) thumb=p;
-        QString thumbUrl = thumb.startsWith("file://")?thumb:"file://"+thumb;
+        QString thumbUrl = QUrl::fromLocalFile(thumb).toString();
         QString color;
         auto it=meta.find(name);
         if (it!=meta.end()) color=it.value().value("color_group").toString();

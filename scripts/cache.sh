@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -u
+set -Eeuo pipefail
 
 APP_DIR="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 
@@ -9,12 +9,22 @@ if [[ ! -f "$APP_DIR/config.json" ]]; then
 fi
 
 CONFIG="$APP_DIR/config.json"
-wallpaper_path=$(jq -r '.wallpaper_path' "$CONFIG")
-cache_path=$(jq -r '.cache_path' "$CONFIG")
-cache_batch_size=$(jq -r '.cache_batch_size' "$CONFIG")
+wallpaper_path=$(jq -r '.wallpaper_path // empty' "$CONFIG")
+cache_path=$(jq -r '.cache_path // empty' "$CONFIG")
+cache_batch_size=$(jq -r '.cache_batch_size // 20' "$CONFIG")
 
-wallpaper_path=$(eval echo "$wallpaper_path")
-cache_path=$(eval echo "$cache_path")
+# Safe ~ expansion without eval (prefix only)
+expand_path() {
+  local p="$1"
+  if [[ "$p" == "~/"* ]]; then
+    p="${HOME}${p:1}"
+  elif [[ "$p" == "~" ]]; then
+    p="$HOME"
+  fi
+  printf '%s' "$p"
+}
+wallpaper_path=$(expand_path "$wallpaper_path")
+cache_path=$(expand_path "$cache_path")
 
 mkdir -p "$cache_path"
 
@@ -27,7 +37,7 @@ else
   exit 1
 fi
 
-find "$wallpaper_path" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) | while read -r img; do
+find "$wallpaper_path" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) -print0 | while IFS= read -r -d '' img; do
   filename=$(basename "$img")
   out="$cache_path/$filename"
   if [[ -f "$out" && "$out" -nt "$img" ]]; then
@@ -42,12 +52,9 @@ find "$wallpaper_path" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*
 done
 wait
 
-find "$cache_path" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) | while read -r cached; do
+find "$cache_path" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) -print0 | while IFS= read -r -d '' cached; do
   filename=$(basename "$cached")
   if ! find "$wallpaper_path" -type f -name "$filename" -print -quit | grep -q .; then
     rm -f "$cached"
   fi
 done
-
-cd "$APP_DIR"
-PYTHONPATH="$APP_DIR" python3 -m backend.metadata "$wallpaper_path" "$cache_path"
