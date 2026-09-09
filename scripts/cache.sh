@@ -4,7 +4,7 @@ set -Eeuo pipefail
 APP_DIR="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 if [[ ! -f "$APP_DIR/config.json" ]]; then
-  echo "Usage: $0 /path/to/hyprroll" >&2
+  echo "Usage: $0 /path/to/roller" >&2
   exit 1
 fi
 

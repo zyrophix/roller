@@ -1,11 +1,11 @@
-#include "Repository.h"
+#include "WallpaperRepository.h"
 #include <QDirIterator>
 
-const QStringList Repository::kExts = {"*.jpg","*.jpeg","*.png","*.webp","*.bmp"};
+const QStringList WallpaperRepository::kExts = {"*.jpg","*.jpeg","*.png","*.webp","*.bmp"};
 
-Repository::Repository(const QString &d): dir(d) {}
+WallpaperRepository::WallpaperRepository(const QString &d): dir(d) {}
 
-void Repository::refresh() {
+void WallpaperRepository::refresh() {
     wallpapers.clear();
     QDirIterator it(dir, kExts, QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDirIterator::Subdirectories);
     while (it.hasNext()) {
@@ -16,9 +16,9 @@ void Repository::refresh() {
         return QFileInfo(a).fileName().toLower() < QFileInfo(b).fileName().toLower();
     });
 }
-void Repository::setMetadata(const QMap<QString, QVariantMap> &m){ metadata=m; }
-QStringList Repository::getAll() const { return wallpapers; }
-QStringList Repository::filterByColor(const QString &group) const {
+void WallpaperRepository::setMetadata(const QMap<QString, QVariantMap> &m){ metadata=m; }
+QStringList WallpaperRepository::getAll() const { return wallpapers; }
+QStringList WallpaperRepository::filterByColor(const QString &group) const {
     if (group.isEmpty()) return wallpapers;
     QStringList out;
     for (auto &p: wallpapers) {
@@ -28,14 +28,14 @@ QStringList Repository::filterByColor(const QString &group) const {
     }
     return out;
 }
-QStringList Repository::filterByName(const QString &query) const {
+QStringList WallpaperRepository::filterByName(const QString &query) const {
     QString q = query.trimmed().toLower();
     if (q.isEmpty()) return wallpapers;
     QStringList out;
     for (auto &p: wallpapers) if (QFileInfo(p).fileName().toLower().contains(q)) out<<p;
     return out;
 }
-QStringList Repository::availableColors() const {
+QStringList WallpaperRepository::availableColors() const {
     QStringList colors; QSet<QString> seen;
     for (auto &p: wallpapers) {
         QString name=QFileInfo(p).fileName();

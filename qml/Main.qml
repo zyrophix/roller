@@ -6,7 +6,7 @@ import org.kde.layershell 1.0 as LayerShell
 
 ApplicationWindow {
     id: win
-    title: "hyprroll"
+    title: "roller"
     width: Screen.width
     height: Screen.height
     visible: true
@@ -17,7 +17,7 @@ ApplicationWindow {
     LayerShell.Window.anchors: LayerShell.Window.AnchorTop | LayerShell.Window.AnchorBottom | LayerShell.Window.AnchorLeft | LayerShell.Window.AnchorRight
     LayerShell.Window.exclusionZone: -1
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityExclusive
-    LayerShell.Window.scope: "hyprroll"
+    LayerShell.Window.scope: "roller"
 
     property int selectedIndex: 0
     property int prevCount: 0
@@ -58,8 +58,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 80
                 visible: true
-                ColorFilter {
-                    id: colorFilter
+                SearchBar {
+                    id: searchBar
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.top
                     anchors.topMargin: 16
@@ -137,16 +137,16 @@ ApplicationWindow {
             let key = event.text.toLowerCase()
             let k = event.key
             let ctrl = event.modifiers & Qt.ControlModifier
-            if (k === Qt.Key_Escape && colorFilter.searchMode) {
-                colorFilter.searchMode = false
+            if (k === Qt.Key_Escape && searchBar.searchMode) {
+                searchBar.searchMode = false
                 win.updateSearch("")
                 keyHandler.forceActiveFocus()
                 event.accepted = true
                 return
             }
             if (k === Qt.Key_Slash || key === "/" || (ctrl && k === Qt.Key_F)) {
-                let willBeSearch = !colorFilter.searchMode
-                colorFilter.searchMode = willBeSearch
+                let willBeSearch = !searchBar.searchMode
+                searchBar.searchMode = willBeSearch
                 if (!willBeSearch) win.updateSearch("")
                 event.accepted = true
                 return
@@ -156,8 +156,8 @@ ApplicationWindow {
             else if (key === "d") { carousel.jumpForward(); event.accepted = true }
             else if (key === "u") { carousel.jumpBack(); event.accepted = true }
             else if (k === Qt.Key_Return || k === Qt.Key_Enter || key === " ") {
-                if (colorFilter.searchMode) {
-                    colorFilter.searchMode = false
+                if (searchBar.searchMode) {
+                    searchBar.searchMode = false
                     keyHandler.forceActiveFocus()
                 }
                 win.applySelected(); event.accepted = true
@@ -168,8 +168,8 @@ ApplicationWindow {
     }
 
     Connections {
-        target: colorFilter
-        function onSearchModeChanged() { if (!colorFilter.searchMode) keyHandler.forceActiveFocus() }
+        target: searchBar
+        function onSearchModeChanged() { if (!searchBar.searchMode) keyHandler.forceActiveFocus() }
     }
 
     Connections {
@@ -181,10 +181,10 @@ ApplicationWindow {
             }
             win.selectedIndex = 0
             win.prevCount = cnt
-            if (!colorFilter.searchMode) {
+            if (!searchBar.searchMode) {
                 keyHandler.forceActiveFocus()
             }
-            // when in searchMode, keep focus on searchField (handled by ColorFilter)
+            // when in searchMode, keep focus on searchField (handled by SearchBar)
         }
         function onWallpaperApplied(path) {
             // Uncomment to auto-close after apply:

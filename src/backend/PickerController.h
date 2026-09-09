@@ -1,15 +1,15 @@
 #pragma once
 #include <QObject>
-#include "Repository.h"
-#include "Metadata.h"
-#include "Model.h"
-#include "ProxyModel.h"
-#include "Config.h"
+#include "WallpaperRepository.h"
+#include "MetadataStore.h"
+#include "WallpaperModel.h"
+#include "WallpaperFilterProxy.h"
+#include "AppConfig.h"
 
-class Backend : public QObject {
+class PickerController : public QObject {
     Q_OBJECT
 public:
-    explicit Backend(Repository *repo, MetadataStore *store, WallpaperModel *model, WallpaperFilterProxy *proxy, Config *cfg, QObject *parent=nullptr);
+    explicit PickerController(WallpaperRepository *repo, MetadataStore *store, WallpaperModel *model, WallpaperFilterProxy *proxy, AppConfig *cfg, QObject *parent=nullptr);
     Q_INVOKABLE void setFilter(const QString &color);
     Q_INVOKABLE void setSearch(const QString &query);
     Q_INVOKABLE void applyWallpaper(const QString &path);
@@ -21,11 +21,11 @@ signals:
     void wallpaperApplied(const QString &path);
 private:
     void applyFilters();
-    Repository *repo;
+    WallpaperRepository *repo;
     MetadataStore *store;
     WallpaperModel *model;
     WallpaperFilterProxy *proxy;
-    Config *cfg;
+    AppConfig *cfg;
     QString activeColor;
     QString searchQuery;
     QStringList available;

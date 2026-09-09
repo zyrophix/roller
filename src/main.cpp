@@ -1,4 +1,4 @@
-// hyprroll-cpp — Qt6 + QML, reuses qml/* 1:1 from python prototype
+// roller — Qt6 + QML wallpaper picker
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -12,12 +12,12 @@
 #include <LayerShellQt/Shell>
 #include <LayerShellQt/Window>
 #endif
-#include "backend/Config.h"
-#include "backend/Repository.h"
-#include "backend/Metadata.h"
-#include "backend/Model.h"
-#include "backend/ProxyModel.h"
-#include "backend/Backend.h"
+#include "backend/AppConfig.h"
+#include "backend/WallpaperRepository.h"
+#include "backend/MetadataStore.h"
+#include "backend/WallpaperModel.h"
+#include "backend/WallpaperFilterProxy.h"
+#include "backend/PickerController.h"
 
 static QJsonObject loadConfig(const QString &path) {
     QFile f(path);
@@ -31,18 +31,18 @@ int main(int argc, char *argv[]) {
     fmt.setAlphaBufferSize(8);
     QSurfaceFormat::setDefaultFormat(fmt);
     QGuiApplication app(argc, argv);
-    app.setApplicationName("hyprroll");
-    app.setDesktopFileName("hyprroll");
+    app.setApplicationName("roller");
+    app.setDesktopFileName("roller");
     // LayerShell is handled in QML via org.kde.layershell when use_layer_shell is true
     QString appDir = QCoreApplication::applicationDirPath();
     QString configPath = QDir::cleanPath(QDir(appDir).filePath("../config.json"));
     if (!QFile::exists(configPath)) configPath = QDir::current().filePath("config.json");
-    if (!QFile::exists(configPath)) configPath = QDir::home().filePath(".config/hyprroll/config.json");
+    if (!QFile::exists(configPath)) configPath = QDir::home().filePath(".config/roller/config.json");
     QJsonObject cfgObj = loadConfig(configPath);
     if (cfgObj.isEmpty()) {
         // defaults
         cfgObj["wallpaper_path"] = QDir::home().filePath("Pictures/Wallpapers");
-        cfgObj["cache_path"] = QDir::home().filePath(".cache/hyprroll/thumbs");
+        cfgObj["cache_path"] = QDir::home().filePath(".cache/roller/thumbs");
         cfgObj["number_of_pictures"] = 5;
         cfgObj["border_color"] = "#b4befe";
     }
@@ -52,12 +52,12 @@ int main(int argc, char *argv[]) {
         return p;
     };
     QString wallpaperDir = expandPath(cfgObj.value("wallpaper_path").toString(QDir::home().filePath("Pictures/Wallpapers")));
-    QString cacheDir = expandPath(cfgObj.value("cache_path").toString(QDir::home().filePath(".cache/hyprroll/thumbs")));
+    QString cacheDir = expandPath(cfgObj.value("cache_path").toString(QDir::home().filePath(".cache/roller/thumbs")));
     QDir().mkpath(wallpaperDir);
     QDir().mkpath(cacheDir);
 
-    Config cfg(cfgObj);
-    Repository repo(wallpaperDir);
+    AppConfig cfg(cfgObj);
+    WallpaperRepository repo(wallpaperDir);
     repo.refresh();
     MetadataStore store(QDir(cacheDir).filePath("metadata.json"));
     store.load();
@@ -66,13 +66,13 @@ int main(int argc, char *argv[]) {
     sourceModel.setDirs(wallpaperDir, cacheDir);
     WallpaperFilterProxy proxyModel;
     proxyModel.setSource(&sourceModel);
-    Backend backend(&repo, &store, &sourceModel, &proxyModel, &cfg);
+    PickerController backend(&repo, &store, &sourceModel, &proxyModel, &cfg);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("wallpaperModel", &proxyModel);
     engine.rootContext()->setContextProperty("backend", &backend);
     engine.rootContext()->setContextProperty("config", &cfg);
-    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Hyprroll/qml/Main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Roller/qml/Main.qml")));
     if (engine.rootObjects().isEmpty()) {
         QStringList fallbacks = {
             QDir(appDir).filePath("../qml/Main.qml"),

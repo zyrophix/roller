@@ -2,7 +2,7 @@
 #include <QObject>
 #include <QJsonObject>
 
-class Config : public QObject {
+class AppConfig : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString borderColor READ borderColor NOTIFY changed)
     Q_PROPERTY(int borderWidth READ borderWidth NOTIFY changed)
@@ -22,7 +22,7 @@ class Config : public QObject {
     Q_PROPERTY(int transitionFps READ transitionFps NOTIFY changed)
     Q_PROPERTY(bool useLayerShell READ useLayerShell NOTIFY changed)
 public:
-    explicit Config(const QJsonObject &data, QObject *parent=nullptr);
+    explicit AppConfig(const QJsonObject &data, QObject *parent=nullptr);
     QString borderColor() const { return obj.value("border_color").toString("#b4befe"); }
     int borderWidth() const { return obj.value("border_width").toInt(4); }
     int numberOfPictures() const { return obj.value("number_of_pictures").toInt(5); }

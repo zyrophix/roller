@@ -1,12 +1,12 @@
-# hyprroll
+# roller
 
 > Inspired by [serpantinum](https://github.com/ilyamiro/serpantinum) — wallpaper picker from his Hyprland shell.
 
 A fast, keyboard-driven wallpaper picker for Hyprland. Browse local wallpapers in a centered carousel, search by filename, and apply instantly with `awww` — pure `QML` + `C++` `LayerShell` overlay.
 
-![hyprroll](assets/demo.png)
+![roller](assets/demo.png)
 
-[![CI](https://github.com/zyrophix/hyprroll/actions/workflows/ci.yml/badge.svg)](https://github.com/zyrophix/hyprroll/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Qt 6.5+](https://img.shields.io/badge/Qt-6.5%2B-green.svg)](https://www.qt.io) [![Hyprland 0.56+](https://img.shields.io/badge/Hyprland-0.56%2B-blue.svg)](https://hyprland.org)
+[![CI](https://github.com/zyrophix/roller/actions/workflows/ci.yml/badge.svg)](https://github.com/zyrophix/roller/actions) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Qt 6.5+](https://img.shields.io/badge/Qt-6.5%2B-green.svg)](https://www.qt.io) [![Hyprland 0.56+](https://img.shields.io/badge/Hyprland-0.56%2B-blue.svg)](https://hyprland.org)
 
 ## Features
 
@@ -42,22 +42,22 @@ sudo pacman -S qt6-base qt6-declarative layer-shell-qt jq imagemagick awww
 Build and install:
 
 ```bash
-git clone https://github.com/zyrophix/hyprroll
-cd hyprroll
+git clone https://github.com/zyrophix/roller
+cd roller
 cmake -B build -S . && cmake --build build
-install -Dm755 build/hyprroll ~/.local/bin/hyprroll
+install -Dm755 build/roller ~/.local/bin/roller
 ```
 
 Add to `~/.config/hypr/hyprland.lua` — rule and keybind:
 
 ```lua
 hl.layer_rule({
-  match = { namespace = "^(hyprroll)$" },
+  match = { namespace = "^(roller)$" },
   blur = false,
   ignore_alpha = 0,
 })
 
-hl.bind("SUPER + W", hl.dsp.exec_cmd("hyprroll"))
+hl.bind("SUPER + W", hl.dsp.exec_cmd("roller"))
 
 hl.on("hyprland.start", function()
   hl.exec_cmd("awww-daemon")
@@ -67,13 +67,13 @@ end)
 Run:
 
 ```bash
-hyprroll          # or SUPER + W
+roller          # or SUPER + W
 ```
 
-Cache is generated automatically on first launch (`~/.cache/hyprroll/thumbs`). To rebuild manually:
+Cache is generated automatically on first launch (`~/.cache/roller/thumbs`). To rebuild manually:
 
 ```bash
-./scripts/cache.sh ~/Projects/hyprroll
+./scripts/cache.sh ~/Projects/roller
 ```
 
 ### Keybinds
@@ -102,7 +102,7 @@ awww img <path> --transition-type grow --transition-pos 0.5,0.5 --transition-dur
 ```json
 {
   "wallpaper_path": "~/Pictures/Wallpapers",
-  "cache_path": "~/.cache/hyprroll/thumbs",
+  "cache_path": "~/.cache/roller/thumbs",
   "number_of_pictures": 5,
   "border_color": "#b4befe",
   "border_width": 4,
@@ -122,12 +122,12 @@ awww img <path> --transition-type grow --transition-pos 0.5,0.5 --transition-dur
 }
 ```
 
-Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.webp` `.bmp`), cache `~/.cache/hyprroll/thumbs`.
+Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.webp` `.bmp`), cache `~/.cache/roller/thumbs`.
 
 ## Structure
 
 ```
-hyprroll/
+roller/
 ├── qml/Main.qml          # LayerShell overlay fullscreen transparent, 678 centered
 ├── qml/Carousel.qml      # Canvas 1.6/1.1 0.3 border 4
 ├── qml/ColorFilter.qml   # Search-only bar

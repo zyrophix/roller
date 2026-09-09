@@ -1,4 +1,4 @@
-#include "Color.h"
+#include "ColorClassifier.h"
 #include <cmath>
 
 const QMap<QString, ColorGroup> kColorGroups = {

@@ -1,4 +1,4 @@
-#include "ProxyModel.h"
+#include "WallpaperFilterProxy.h"
 
 WallpaperFilterProxy::WallpaperFilterProxy(QObject *p): QSortFilterProxyModel(p) {
     connect(this, &QSortFilterProxyModel::rowsInserted, this, &WallpaperFilterProxy::countChanged);

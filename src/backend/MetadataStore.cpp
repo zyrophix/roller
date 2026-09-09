@@ -1,5 +1,5 @@
-#include "Metadata.h"
-#include "Color.h"
+#include "MetadataStore.h"
+#include "ColorClassifier.h"
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>

@@ -1,4 +1,4 @@
-#include "Model.h"
+#include "WallpaperModel.h"
 #include <QFileInfo>
 #include <QDir>
 #include <QUrl>

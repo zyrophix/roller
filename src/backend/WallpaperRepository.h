@@ -6,9 +6,9 @@
 #include <QMap>
 #include <QVariant>
 
-class Repository {
+class WallpaperRepository {
 public:
-    explicit Repository(const QString &wallpaperDir);
+    explicit WallpaperRepository(const QString &wallpaperDir);
     void refresh();
     void setMetadata(const QMap<QString, QVariantMap> &meta);
     QStringList getAll() const; // absolute paths

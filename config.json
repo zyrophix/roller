@@ -1,6 +1,6 @@
 {
     "wallpaper_path": "/home/you/Pictures/Wallpapers",
-    "cache_path": "/home/you/.cache/hyprroll/thumbs",
+    "cache_path": "/home/you/.cache/roller/thumbs",
     "number_of_pictures": 5,
     "border_color": "#b4befe",
     "border_width": 4,

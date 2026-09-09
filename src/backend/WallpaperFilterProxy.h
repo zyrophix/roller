@@ -1,6 +1,6 @@
 #pragma once
 #include <QSortFilterProxyModel>
-#include "Model.h"
+#include "WallpaperModel.h"
 
 class WallpaperFilterProxy : public QSortFilterProxyModel {
     Q_OBJECT
