@@ -81,11 +81,12 @@ Item {
         targetX = x
         startAnim()
     }
-    function startAnim() { if (!anim.running) anim.running = true }
+    function startAnim() { anim.restart() }
 
     function setSelectedImmediate(idx) {
         if (count===0) return
-        idx = ((idx%count)+count)%count
+        if (isSmallCount) idx = Math.max(0, Math.min(count - 1, idx))
+        else idx = ((idx%count)+count)%count
         visualSelection = idx
         targetSelection = idx
         contentX = idx * step + tileWidth/2 - width/2
@@ -104,10 +105,8 @@ Item {
         }
     }
 
-    Timer {
+    FrameAnimation {
         id: anim
-        interval: 16
-        repeat: true
         running: false
         onTriggered: {
             let dx = targetX - contentX
@@ -138,6 +137,15 @@ Item {
                 idx = Math.max(0, Math.min(count - 1, idx))
                 targetSelection = idx
                 visualSelection = idx
+            } else {
+                let idx = Math.round((nx + width/2 - tileWidth/2) / step)
+                idx = ((idx % count) + count) % count
+                let cur = ((Math.round(targetSelection) % count) + count) % count
+                let delta = idx - cur
+                if (delta > count/2) delta -= count
+                if (delta < -count/2) delta += count
+                targetSelection += delta
+                visualSelection = targetSelection
             }
             targetX = nx
             startAnim()
@@ -170,7 +178,18 @@ Item {
                     idx = Math.max(0, Math.min(count - 1, idx))
                     targetSelection = idx; visualSelection = idx
                     ensureVisible(idx)
-                } else startAnim()
+                } else {
+                    let idx = Math.round((targetX + width/2 - tileWidth/2) / step)
+                    idx = ((idx % count) + count) % count
+                    let cur = ((Math.round(targetSelection) % count) + count) % count
+                    let delta = idx - cur
+                    if (delta > count/2) delta -= count
+                    if (delta < -count/2) delta += count
+                    targetSelection += delta
+                    visualSelection = targetSelection
+                    ensureVisible(targetSelection)
+                    anim.restart()
+                }
             }
             dragging=false
         }

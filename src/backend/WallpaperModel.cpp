@@ -3,6 +3,8 @@
 #include <QDir>
 #include <QUrl>
 #include <QCryptographicHash>
+#include <QImage>
+#include <QImageReader>
 
 WallpaperModel::WallpaperModel(QObject *p): QAbstractListModel(p) {}
 int WallpaperModel::rowCount(const QModelIndex &p) const { return p.isValid()?0:m_items.size(); }
@@ -32,8 +34,22 @@ void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVar
         QString thumbOld = QDir(cacheDir).filePath(name);
         QString thumb;
         if (QFileInfo::exists(thumbHashed)) thumb = thumbHashed;
-        else if (QFileInfo::exists(thumbOld)) thumb = thumbOld;
-        else thumb = p;
+        else if (QFileInfo::exists(thumbOld)) {
+            // migrate old basename thumb to hashed name on first use
+            QFile::copy(thumbOld, thumbHashed);
+            thumb = thumbHashed;
+        } else {
+            // auto-generate thumb so roller needs no manual cache.sh
+            QImageReader reader(p);
+            reader.setAutoTransform(true);
+            QImage img = reader.read();
+            if (!img.isNull()) {
+                QImage scaled = img.scaledToWidth(500, Qt::SmoothTransformation);
+                QDir().mkpath(cacheDir);
+                if (scaled.save(thumbHashed, nullptr, 85)) thumb = thumbHashed;
+                else thumb = p;
+            } else thumb = p;
+        }
         QString thumbUrl = QUrl::fromLocalFile(thumb).toString();
         QString color;
         auto it=meta.find(name);
