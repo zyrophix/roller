@@ -28,14 +28,21 @@ Item {
     property int count: 0
     property int visualCenter: Math.round(visualSelection)
 
-    onModelChanged: {
-        if (model && model.countChanged)
-            model.countChanged.connect(() => root.count = model.count())
-        root.count = model ? model.count() : 0
+    Connections {
+        target: root.model
+        function onCountChanged() { root.count = root.model ? root.model.count() : 0 }
     }
+    onModelChanged: root.count = model ? model.count() : 0
 
     function setSelected(idx) {
         if (count === 0) return
+        if (isSmallCount) {
+            idx = Math.max(0, Math.min(count - 1, idx))
+            targetSelection = idx
+            ensureVisible(idx)
+            startAnim()
+            return
+        }
         idx = ((idx % count) + count) % count
         let cur = ((Math.round(targetSelection) % count) + count) % count
         let delta = idx - cur
@@ -45,15 +52,33 @@ Item {
         ensureVisible(targetSelection)
         startAnim()
     }
-    function next() { setSelected(((Math.round(targetSelection)+1)%count+count)%count) }
-    function prev() { setSelected(((Math.round(targetSelection)-1)%count+count)%count) }
-    function jumpForward() { let c=countVisible; let t=Math.round(targetSelection)+c; setSelected(((t%count)+count)%count) }
-    function jumpBack() { let c=countVisible; let t=Math.round(targetSelection)-c; setSelected(((t%count)+count)%count) }
+    function next() {
+        if (isSmallCount) { setSelected(Math.min(count - 1, Math.round(targetSelection) + 1)); return }
+        setSelected(((Math.round(targetSelection)+1)%count+count)%count)
+    }
+    function prev() {
+        if (isSmallCount) { setSelected(Math.max(0, Math.round(targetSelection) - 1)); return }
+        setSelected(((Math.round(targetSelection)-1)%count+count)%count)
+    }
+    function jumpForward() {
+        if (isSmallCount) { setSelected(Math.min(count - 1, Math.round(targetSelection) + countVisible)); return }
+        let c=countVisible; let t=Math.round(targetSelection)+c; setSelected(((t%count)+count)%count)
+    }
+    function jumpBack() {
+        if (isSmallCount) { setSelected(Math.max(0, Math.round(targetSelection) - countVisible)); return }
+        let c=countVisible; let t=Math.round(targetSelection)-c; setSelected(((t%count)+count)%count)
+    }
 
     function ensureVisible(idx) {
         let center = idx * step + tileWidth / 2
         let viewportCenter = width / 2
-        targetX = center - viewportCenter
+        let x = center - viewportCenter
+        if (isSmallCount) {
+            let minX = tileWidth/2 - width/2
+            let maxX = (count - 1) * step + tileWidth/2 - width/2
+            x = Math.max(minX, Math.min(maxX, x))
+        }
+        targetX = x
         startAnim()
     }
     function startAnim() { if (!anim.running) anim.running = true }
@@ -91,7 +116,7 @@ Item {
             let doneS = Math.abs(ds) < 0.01
             if (doneX) contentX = targetX; else contentX += dx * 0.15
             if (doneS) visualSelection = targetSelection; else visualSelection += ds * 0.22
-            if (count>0 && Math.abs(visualSelection) >= count) {
+            if (!isSmallCount && count>0 && Math.abs(visualSelection) >= count) {
                 let off = Math.floor(visualSelection / count) * count
                 visualSelection -= off; targetSelection -= off
                 contentX -= off*step; targetX -= off*step
@@ -104,7 +129,17 @@ Item {
     WheelHandler {
         onWheel: (e) => {
             let d = Math.abs(e.angleDelta.y) >= Math.abs(e.angleDelta.x) ? e.angleDelta.y : e.angleDelta.x
-            targetX -= d * 0.8
+            let nx = targetX - d * 0.8
+            if (isSmallCount) {
+                let minX = tileWidth/2 - width/2
+                let maxX = (count - 1) * step + tileWidth/2 - width/2
+                nx = Math.max(minX, Math.min(maxX, nx))
+                let idx = Math.round((nx + width/2 - tileWidth/2) / step)
+                idx = Math.max(0, Math.min(count - 1, idx))
+                targetSelection = idx
+                visualSelection = idx
+            }
+            targetX = nx
             startAnim()
         }
     }
@@ -118,21 +153,38 @@ Item {
         onPositionChanged: (m)=>{
             let off=m.x-startX
             if(!dragging && Math.abs(off)>8) dragging=true
-            if(dragging){ targetX=startContentX-off; contentX=targetX; anim.running=false }
+            if(dragging){
+                let nx = startContentX-off
+                if (isSmallCount) {
+                    let minX = tileWidth/2 - width/2
+                    let maxX = (count - 1) * step + tileWidth/2 - width/2
+                    nx = Math.max(minX, Math.min(maxX, nx))
+                }
+                targetX=nx; contentX=targetX; anim.running=false
+            }
         }
-        onReleased: (m)=>{ if(dragging) startAnim(); dragging=false }
+        onReleased: (m)=>{
+            if(dragging){
+                if (isSmallCount) {
+                    let idx = Math.round((targetX + width/2 - tileWidth/2) / step)
+                    idx = Math.max(0, Math.min(count - 1, idx))
+                    targetSelection = idx; visualSelection = idx
+                    ensureVisible(idx)
+                } else startAnim()
+            }
+            dragging=false
+        }
     }
 
-    // Virtualized delegates — only visibleRange around center, like app.py: visible_range = countVisible//2+2
     property int visibleRange: Math.floor(countVisible/2)+2
+    property bool isSmallCount: root.count > 0 && root.count <= root.visibleRange*2+1
     Repeater {
-        model: root.count>0 ? (root.visibleRange*2+1) : 0
+        model: root.count>0 ? (root.isSmallCount ? root.count : root.visibleRange*2+1) : 0
         delegate: Item {
             required property int index
-            // virtual index centered around visualSelection
             property int center: Math.floor(root.visualSelection)
-            property int vIdx: center - root.visibleRange + index
-            property int realIdx: ((vIdx % root.count)+root.count)%root.count
+            property int vIdx: root.isSmallCount ? index : center - root.visibleRange + index
+            property int realIdx: root.isSmallCount ? index : ((vIdx % root.count)+root.count)%root.count
             // these come from model
             property string wallpaperPath: root.model ? root.model.get_path_at(realIdx) : ""
             property string wallpaperName: root.model ? root.model.get_name_at(realIdx) : ""
@@ -154,16 +206,16 @@ Item {
             y: (root.height - scaledH)/2
             width: scaledW + shearOff
             height: scaledH
-            z: realIdx === root.selectedIndex ? 100 : 50 - Math.floor(dist)
+            z: isSelected ? 100 : 50 - Math.floor(dist)
             visible: !(x > root.width + root.margin || x + width < -root.margin)
-            property bool isSelected: realIdx === root.selectedIndex
+            property bool isSelected: root.isSmallCount ? realIdx === root.selectedIndex : vIdx === Math.round(root.visualSelection)
 
-            // Hidden image for size
             Image {
                 id: hiddenImg
                 source: thumbnailPath
                 visible: false
                 asynchronous: true
+                retainWhileLoading: true
                 cache: true
                 onStatusChanged: if (status===Image.Ready) canvas.requestPaint()
             }
@@ -188,8 +240,8 @@ Item {
                     ctx.closePath()
                     ctx.clip()
 
-                    // cover image
-                    if (hiddenImg.status === Image.Ready) {
+                    // cover image — draw retained buffer too, never blank
+                    if (hiddenImg.status === Image.Ready || hiddenImg.implicitWidth > 0) {
                         var pw = hiddenImg.sourceSize.width || hiddenImg.implicitWidth
                         var ph = hiddenImg.sourceSize.height || hiddenImg.implicitHeight
                         if (pw>0 && ph>0) {
@@ -207,8 +259,7 @@ Item {
                             }
                         }
                     } else {
-                        ctx.fillStyle = "#1e1e1e"
-                        ctx.fillRect(0,0,width,height)
+                        ctx.clearRect(0,0,width,height)
                     }
 
                     // border for selected — width from config

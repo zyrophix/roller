@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QUrl>
+#include <QCryptographicHash>
 
 WallpaperModel::WallpaperModel(QObject *p): QAbstractListModel(p) {}
 int WallpaperModel::rowCount(const QModelIndex &p) const { return p.isValid()?0:m_items.size(); }
@@ -23,8 +24,16 @@ void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVar
     m_items.clear();
     for(auto &p: paths){
         QString name=QFileInfo(p).fileName();
-        QString thumb = QDir(cacheDir).filePath(name);
-        if (!QFileInfo::exists(thumb)) thumb=p;
+        QString hash = QString::fromUtf8(QCryptographicHash::hash(p.toUtf8(), QCryptographicHash::Md5).toHex());
+        QString ext = QFileInfo(p).suffix().toLower();
+        if (ext.isEmpty()) ext = "jpg";
+        QString hashedName = hash + "." + ext;
+        QString thumbHashed = QDir(cacheDir).filePath(hashedName);
+        QString thumbOld = QDir(cacheDir).filePath(name);
+        QString thumb;
+        if (QFileInfo::exists(thumbHashed)) thumb = thumbHashed;
+        else if (QFileInfo::exists(thumbOld)) thumb = thumbOld;
+        else thumb = p;
         QString thumbUrl = QUrl::fromLocalFile(thumb).toString();
         QString color;
         auto it=meta.find(name);

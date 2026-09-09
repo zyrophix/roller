@@ -145,8 +145,9 @@ ApplicationWindow {
                 return
             }
             if (k === Qt.Key_Slash || key === "/" || (ctrl && k === Qt.Key_F)) {
-                colorFilter.searchMode = !colorFilter.searchMode
-                if (!colorFilter.searchMode) win.updateSearch("")
+                let willBeSearch = !colorFilter.searchMode
+                colorFilter.searchMode = willBeSearch
+                if (!willBeSearch) win.updateSearch("")
                 event.accepted = true
                 return
             }
@@ -154,27 +155,31 @@ ApplicationWindow {
             else if (key === "h" || k === Qt.Key_Left) { carousel.prev(); event.accepted = true }
             else if (key === "d") { carousel.jumpForward(); event.accepted = true }
             else if (key === "u") { carousel.jumpBack(); event.accepted = true }
-            else if (k === Qt.Key_Return || k === Qt.Key_Enter || key === " ") { win.applySelected(); event.accepted = true }
+            else if (k === Qt.Key_Return || k === Qt.Key_Enter || key === " ") {
+                if (colorFilter.searchMode) {
+                    colorFilter.searchMode = false
+                    keyHandler.forceActiveFocus()
+                }
+                win.applySelected(); event.accepted = true
+            }
             else if (k === Qt.Key_Escape) { Qt.quit(); event.accepted = true }
         }
         Component.onCompleted: forceActiveFocus()
     }
 
-    // Keep focus after interactions — don't steal from search field
+    Connections {
+        target: colorFilter
+        function onSearchModeChanged() { if (!colorFilter.searchMode) keyHandler.forceActiveFocus() }
+    }
+
     Connections {
         target: backend
-        function onAvailableColorsChanged(colors) { colorFilter.setAvailable(colors) }
-        function onActiveColorChanged(c) { colorFilter.setActive(c) }
         function onWallpapersChanged() {
             let cnt = wallpaperModel ? wallpaperModel.countProp : 0
-            if (win.prevCount === 0 && cnt > 0) {
-                let start = Math.floor(carousel.countVisible / 2) % cnt
-                carousel.setSelectedImmediate(start)
-                win.selectedIndex = start
-            } else {
+            if (cnt > 0) {
                 carousel.setSelectedImmediate(0)
-                win.selectedIndex = 0
             }
+            win.selectedIndex = 0
             win.prevCount = cnt
             if (!colorFilter.searchMode) {
                 keyHandler.forceActiveFocus()

@@ -20,6 +20,7 @@ qt_add_executable(hyprroll
     src/backend/Repository.cpp
     src/backend/Metadata.cpp
     src/backend/Model.cpp
+    src/backend/ProxyModel.cpp
     src/backend/Awww.cpp
     src/backend/Backend.cpp
     src/backend/Config.cpp

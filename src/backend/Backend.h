@@ -3,12 +3,13 @@
 #include "Repository.h"
 #include "Metadata.h"
 #include "Model.h"
+#include "ProxyModel.h"
 #include "Config.h"
 
 class Backend : public QObject {
     Q_OBJECT
 public:
-    explicit Backend(Repository *repo, MetadataStore *store, WallpaperModel *model, Config *cfg, QObject *parent=nullptr);
+    explicit Backend(Repository *repo, MetadataStore *store, WallpaperModel *model, WallpaperFilterProxy *proxy, Config *cfg, QObject *parent=nullptr);
     Q_INVOKABLE void setFilter(const QString &color);
     Q_INVOKABLE void setSearch(const QString &query);
     Q_INVOKABLE void applyWallpaper(const QString &path);
@@ -23,6 +24,7 @@ private:
     Repository *repo;
     MetadataStore *store;
     WallpaperModel *model;
+    WallpaperFilterProxy *proxy;
     Config *cfg;
     QString activeColor;
     QString searchQuery;

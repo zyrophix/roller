@@ -38,9 +38,16 @@ else
 fi
 
 find "$wallpaper_path" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) -print0 | while IFS= read -r -d '' img; do
-  filename=$(basename "$img")
-  out="$cache_path/$filename"
+  ext="${img##*.}"; ext=$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')
+  hash=$(printf '%s' "$img" | md5sum | cut -d' ' -f1)
+  out="$cache_path/$hash.$ext"
+  out_old="$cache_path/$(basename "$img")"
   if [[ -f "$out" && "$out" -nt "$img" ]]; then
+    continue
+  fi
+  # fallback: keep old thumb if exists and newer
+  if [[ -f "$out_old" && "$out_old" -nt "$img" && ! -f "$out" ]]; then
+    cp -a "$out_old" "$out"
     continue
   fi
   "$IM_BIN" "$img" -thumbnail x500 -strip -quality 85 "$out" &
@@ -52,9 +59,18 @@ find "$wallpaper_path" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*
 done
 wait
 
+# cleanup orphaned thumbs (both old basename and new hashed)
+tmp_expected=$(mktemp)
+find "$wallpaper_path" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) -print0 | while IFS= read -r -d '' img; do
+  ext="${img##*.}"; ext=$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')
+  hash=$(printf '%s' "$img" | md5sum | cut -d' ' -f1)
+  printf '%s\n' "$hash.$ext" >> "$tmp_expected"
+  printf '%s\n' "$(basename "$img")" >> "$tmp_expected"
+done
 find "$cache_path" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.bmp" \) -print0 | while IFS= read -r -d '' cached; do
-  filename=$(basename "$cached")
-  if ! find "$wallpaper_path" -type f -name "$filename" -print -quit | grep -q .; then
+  base=$(basename "$cached")
+  if ! grep -qxF "$base" "$tmp_expected"; then
     rm -f "$cached"
   fi
 done
+rm -f "$tmp_expected"

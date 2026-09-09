@@ -16,6 +16,7 @@
 #include "backend/Repository.h"
 #include "backend/Metadata.h"
 #include "backend/Model.h"
+#include "backend/ProxyModel.h"
 #include "backend/Backend.h"
 
 static QJsonObject loadConfig(const QString &path) {
@@ -61,12 +62,14 @@ int main(int argc, char *argv[]) {
     MetadataStore store(QDir(cacheDir).filePath("metadata.json"));
     store.load();
     repo.setMetadata(store.data);
-    WallpaperModel model;
-    model.setDirs(wallpaperDir, cacheDir);
-    Backend backend(&repo, &store, &model, &cfg);
+    WallpaperModel sourceModel;
+    sourceModel.setDirs(wallpaperDir, cacheDir);
+    WallpaperFilterProxy proxyModel;
+    proxyModel.setSource(&sourceModel);
+    Backend backend(&repo, &store, &sourceModel, &proxyModel, &cfg);
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("wallpaperModel", &model);
+    engine.rootContext()->setContextProperty("wallpaperModel", &proxyModel);
     engine.rootContext()->setContextProperty("backend", &backend);
     engine.rootContext()->setContextProperty("config", &cfg);
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Hyprroll/qml/Main.qml")));
