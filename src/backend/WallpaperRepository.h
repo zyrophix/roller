@@ -12,9 +12,6 @@ public:
     void refresh();
     void setMetadata(const QMap<QString, QVariantMap> &meta);
     QStringList getAll() const; // absolute paths
-    QStringList filterByColor(const QString &group) const;
-    QStringList filterByName(const QString &query) const;
-    QStringList availableColors() const;
 
 private:
     QString dir;

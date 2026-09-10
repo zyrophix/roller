@@ -28,9 +28,6 @@ ApplicationWindow {
         if (path && backend) backend.applyWallpaper(path)
     }
 
-    function updateFilter(color) {
-        if (backend) backend.setFilter(color)
-    }
     function updateSearch(query) {
         if (backend) backend.setSearch(query)
     }

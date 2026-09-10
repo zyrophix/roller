@@ -20,20 +20,11 @@ void WallpaperFilterProxy::setSearchQuery(const QString &q){
     query = nq;
     invalidateRowsFilter();
 }
-void WallpaperFilterProxy::setColorGroup(const QString &g){
-    if (g == colorGroup) return;
-    colorGroup = g;
-    invalidateRowsFilter();
-}
 int WallpaperFilterProxy::count() const { return rowCount(); }
 bool WallpaperFilterProxy::filterAcceptsRow(int source_row, const QModelIndex &parent) const {
     if (!srcModel) return true;
-    QModelIndex idx = srcModel->index(source_row, 0, parent);
-    if (!colorGroup.isEmpty()) {
-        QString c = srcModel->data(idx, WallpaperModel::ColorRole).toString();
-        if (c != colorGroup) return false;
-    }
     if (query.isEmpty()) return true;
+    QModelIndex idx = srcModel->index(source_row, 0, parent);
     QString name = srcModel->data(idx, WallpaperModel::NameRole).toString().toLower();
     return name.contains(query);
 }

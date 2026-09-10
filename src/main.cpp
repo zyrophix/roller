@@ -17,6 +17,7 @@
 #include "backend/MetadataStore.h"
 #include "backend/WallpaperModel.h"
 #include "backend/WallpaperFilterProxy.h"
+#include "backend/ThumbnailCache.h"
 #include "backend/PickerController.h"
 
 static QJsonObject loadConfig(const QString &path) {
@@ -66,6 +67,8 @@ int main(int argc, char *argv[]) {
     sourceModel.setDirs(wallpaperDir, cacheDir);
     WallpaperFilterProxy proxyModel;
     proxyModel.setSource(&sourceModel);
+    ThumbnailCache thumbCache(cacheDir);
+    QObject::connect(&thumbCache, &ThumbnailCache::thumbReady, &sourceModel, &WallpaperModel::onThumbReady);
     PickerController backend(&repo, &store, &sourceModel, &proxyModel, &cfg);
 
     QQmlApplicationEngine engine;
@@ -89,5 +92,6 @@ int main(int argc, char *argv[]) {
     }
     if (engine.rootObjects().isEmpty()) return 1;
     backend.refresh();
+    thumbCache.generateMissing(repo.getAll());
     return app.exec();
 }

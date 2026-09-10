@@ -7,7 +7,7 @@
 class WallpaperModel : public QAbstractListModel {
     Q_OBJECT
 public:
-    enum Roles { PathRole = Qt::UserRole+1, NameRole, ThumbRole, ColorRole };
+    enum Roles { PathRole = Qt::UserRole+1, NameRole, ThumbRole };
     explicit WallpaperModel(QObject *parent=nullptr);
     int rowCount(const QModelIndex &p=QModelIndex()) const override;
     QVariant data(const QModelIndex &idx, int role) const override;
@@ -22,10 +22,12 @@ public:
     Q_INVOKABLE QString get_thumb_at(int idx) const;
     Q_PROPERTY(int countProp READ count NOTIFY countChanged)
     int countProp() const { return m_items.size(); }
+public slots:
+    void onThumbReady(const QString &src, const QString &thumb);
 signals:
     void countChanged();
 private:
-    struct Item { QString path, name, thumb, color; };
+    struct Item { QString path, name, thumb; };
     QVector<Item> m_items;
     QString wallpaperDir, cacheDir;
 };

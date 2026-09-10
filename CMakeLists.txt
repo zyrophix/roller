@@ -11,18 +11,18 @@ endif()
 
 include(GNUInstallDirs)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Quick Gui Core)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Quick Gui Core Concurrent)
 qt_standard_project_setup(REQUIRES 6.8)
 
 find_package(LayerShellQt QUIET)
 
 qt_add_executable(roller
     src/main.cpp
-    src/backend/ColorClassifier.cpp
     src/backend/WallpaperRepository.cpp
     src/backend/MetadataStore.cpp
     src/backend/WallpaperModel.cpp
     src/backend/WallpaperFilterProxy.cpp
+    src/backend/ThumbnailCache.cpp
     src/backend/Awww.cpp
     src/backend/PickerController.cpp
     src/backend/AppConfig.cpp
@@ -38,7 +38,7 @@ qt_add_qml_module(roller
 )
 
 target_compile_options(roller PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(roller PRIVATE Qt6::Quick Qt6::Gui Qt6::Core)
+target_link_libraries(roller PRIVATE Qt6::Quick Qt6::Gui Qt6::Core Qt6::Concurrent)
 if(LayerShellQt_FOUND)
     target_link_libraries(roller PRIVATE LayerShellQt::Interface)
     target_compile_definitions(roller PRIVATE HAS_LAYER_SHELL=1)

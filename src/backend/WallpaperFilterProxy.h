@@ -9,7 +9,6 @@ public:
     explicit WallpaperFilterProxy(QObject *parent=nullptr);
     void setSource(WallpaperModel *src);
     void setSearchQuery(const QString &q);
-    void setColorGroup(const QString &g);
     Q_INVOKABLE int count() const;
     int countProp() const { return count(); }
     Q_INVOKABLE QString get_path_at(int idx) const;
@@ -22,6 +21,5 @@ protected:
     bool filterAcceptsRow(int source_row, const QModelIndex &parent) const override;
 private:
     QString query;
-    QString colorGroup;
     WallpaperModel *srcModel = nullptr;
 };

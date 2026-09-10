@@ -12,13 +12,19 @@ QVariant WallpaperModel::data(const QModelIndex &idx, int role) const {
     if (role==PathRole) return it.path;
     if (role==NameRole) return it.name;
     if (role==ThumbRole) return it.thumb;
-    if (role==ColorRole) return it.color;
     return {};
 }
 QHash<int,QByteArray> WallpaperModel::roleNames() const {
-    return {{PathRole,"wallpaperPath"},{NameRole,"wallpaperName"},{ThumbRole,"thumbnailPath"},{ColorRole,"colorGroup"}};
+    return {{PathRole,"wallpaperPath"},{NameRole,"wallpaperName"},{ThumbRole,"thumbnailPath"}};
 }
 void WallpaperModel::setDirs(const QString &w, const QString &c){ wallpaperDir=w; cacheDir=c; }
+void WallpaperModel::onThumbReady(const QString &src, const QString &thumb) {
+    for (int i=0;i<m_items.size();++i) if (m_items[i].path==src) {
+        m_items[i].thumb = QUrl::fromLocalFile(thumb).toString();
+        emit dataChanged(index(i,0), index(i,0), {ThumbRole});
+        break;
+    }
+}
 void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVariantMap> &meta){
     beginResetModel();
     m_items.clear();
@@ -37,11 +43,7 @@ void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVar
             thumb = thumbHashed;
         } else thumb = p;
         QString thumbUrl = QUrl::fromLocalFile(thumb).toString();
-        QString color;
-        auto it = meta.find(p);
-        if (it == meta.end()) it = meta.find(name);
-        if (it!=meta.end()) color=it.value().value("color_group").toString();
-        m_items.append({p,name,thumbUrl,color});
+        m_items.append({p,name,thumbUrl});
     }
     endResetModel();
     emit countChanged();

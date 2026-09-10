@@ -10,13 +10,10 @@ class PickerController : public QObject {
     Q_OBJECT
 public:
     explicit PickerController(WallpaperRepository *repo, MetadataStore *store, WallpaperModel *model, WallpaperFilterProxy *proxy, AppConfig *cfg, QObject *parent=nullptr);
-    Q_INVOKABLE void setFilter(const QString &color);
     Q_INVOKABLE void setSearch(const QString &query);
     Q_INVOKABLE void applyWallpaper(const QString &path);
     void refresh();
 signals:
-    void availableColorsChanged(const QStringList &colors);
-    void activeColorChanged(const QString &color);
     void wallpapersChanged();
     void wallpaperApplied(const QString &path);
 private:
@@ -26,7 +23,5 @@ private:
     WallpaperModel *model;
     WallpaperFilterProxy *proxy;
     AppConfig *cfg;
-    QString activeColor;
     QString searchQuery;
-    QStringList available;
 };

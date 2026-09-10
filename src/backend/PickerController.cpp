@@ -6,25 +6,11 @@ PickerController::PickerController(WallpaperRepository *r, MetadataStore *s, Wal
 void PickerController::refresh(){
     store->load();
     repo->setMetadata(store->data);
-    available = repo->availableColors();
-    emit availableColorsChanged(available);
-    emit activeColorChanged(activeColor);
     applyFilters();
 }
 void PickerController::applyFilters(){
-    // Source model is built once (rescan path); color + text live in the proxy
     model->setItems(repo->getAll(), store->data);
-    if (proxy) {
-        proxy->setColorGroup(activeColor);
-        proxy->setSearchQuery(searchQuery);
-    }
-    emit wallpapersChanged();
-}
-void PickerController::setFilter(const QString &c){
-    if (c == activeColor) return;
-    activeColor = c;
-    emit activeColorChanged(c);
-    if (proxy) proxy->setColorGroup(c);
+    if (proxy) proxy->setSearchQuery(searchQuery);
     emit wallpapersChanged();
 }
 void PickerController::setSearch(const QString &q){
