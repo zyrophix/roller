@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("wallpaperModel", &proxyModel);
+    engine.rootContext()->setContextProperty("sourceWallpaperModel", &sourceModel);
     engine.rootContext()->setContextProperty("backend", &backend);
     engine.rootContext()->setContextProperty("config", &cfg);
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/Roller/qml/Main.qml")));

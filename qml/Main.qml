@@ -35,18 +35,22 @@ ApplicationWindow {
         if (backend) backend.setSearch(query)
     }
 
-    // Click on empty area closes picker
+    Timer { id: quitTimer; interval: 100; onTriggered: Qt.quit() }
+    function fadeQuit() { content.opacity = 0; quitTimer.restart() }
+
     MouseArea {
         anchors.fill: parent
-        onClicked: Qt.quit()
+        onClicked: fadeQuit()
     }
 
-    // Centered content 678 tall on fullscreen transparent
     Item {
         id: content
         width: win.width
         height: 678
         anchors.centerIn: parent
+        opacity: 0
+        Behavior on opacity { NumberAnimation { duration: 100; easing.type: Easing.OutQuad } }
+        Component.onCompleted: opacity = 1
 
         ColumnLayout {
             anchors.fill: parent
@@ -162,7 +166,7 @@ ApplicationWindow {
                 }
                 win.applySelected(); event.accepted = true
             }
-            else if (k === Qt.Key_Escape) { Qt.quit(); event.accepted = true }
+            else if (k === Qt.Key_Escape) { fadeQuit(); event.accepted = true }
         }
         Component.onCompleted: forceActiveFocus()
     }
@@ -177,7 +181,8 @@ ApplicationWindow {
         function onWallpapersChanged() {
             let cnt = wallpaperModel ? wallpaperModel.countProp : 0
             if (cnt > 0) {
-                carousel.setSelectedImmediate(0)
+                if (win.prevCount === 0) carousel.setSelectedImmediate(0)
+                else carousel.setSelected(0)
             }
             win.selectedIndex = 0
             win.prevCount = cnt

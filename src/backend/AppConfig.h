@@ -16,6 +16,7 @@ class AppConfig : public QObject {
     Q_PROPERTY(QString searchTextColor READ searchTextColor NOTIFY changed)
     Q_PROPERTY(QString searchHintColor READ searchHintColor NOTIFY changed)
     Q_PROPERTY(QString carouselSelectedBorder READ carouselSelectedBorder NOTIFY changed)
+    Q_PROPERTY(QString backend READ backend NOTIFY changed)
     Q_PROPERTY(QString transitionType READ transitionType NOTIFY changed)
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
     Q_PROPERTY(double transitionDuration READ transitionDuration NOTIFY changed)
@@ -35,6 +36,7 @@ public:
     QString searchTextColor() const { return obj.value("search_text_color").toString("#cdd6f4"); }
     QString searchHintColor() const { return obj.value("search_hint_color").toString("#a6adc8"); }
     QString carouselSelectedBorder() const { return obj.value("carousel_selected_border").toString("#b4befe"); }
+    QString backend() const { return obj.value("backend").toString("awww"); }
     QString transitionType() const { return obj.value("transition_type").toString("grow"); }
     QString transitionPos() const { return obj.value("transition_pos").toString("0.5,0.5"); }
     double transitionDuration() const { return obj.value("transition_duration").toDouble(1.2); }

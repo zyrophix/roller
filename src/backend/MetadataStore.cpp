@@ -7,6 +7,8 @@
 #include <QDir>
 #include <QImage>
 #include <QDateTime>
+#include <QSaveFile>
+#include <QDebug>
 #include <cmath>
 
 MetadataStore::MetadataStore(const QString &p): filePath(p) {}
@@ -34,9 +36,11 @@ QMap<QString, QVariantMap> MetadataStore::loadFile(const QString &p) {
 }
 void MetadataStore::save() {
     QDir().mkpath(QFileInfo(filePath).absolutePath());
-    QString tmp = filePath + ".tmp";
-    QFile f(tmp);
-    f.open(QIODevice::WriteOnly);
+    QSaveFile f(filePath);
+    if (!f.open(QIODevice::WriteOnly)) {
+        qWarning() << "MetadataStore: failed to open" << filePath << f.errorString();
+        return;
+    }
     QJsonObject obj;
     for (auto it=data.begin(); it!=data.end(); ++it) {
         QJsonObject o;
@@ -46,9 +50,7 @@ void MetadataStore::save() {
         obj[it.key()] = o;
     }
     f.write(QJsonDocument(obj).toJson(QJsonDocument::Indented));
-    f.close();
-    QFile::remove(filePath);
-    QFile::rename(tmp, filePath);
+    if (!f.commit()) qWarning() << "MetadataStore: commit failed" << filePath << f.errorString();
 }
 QVariantMap MetadataStore::get(const QString &fn) const { return data.value(fn); }
 void MetadataStore::set(const QString &fn, double mtime, const QString &dom, const QString &group){
