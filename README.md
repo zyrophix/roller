@@ -70,7 +70,7 @@ Run:
 roller          # or SUPER + W
 ```
 
-Cache is generated automatically on first launch (`~/.cache/roller/thumbs`). To rebuild manually:
+Thumbnails are generated in the background on launch (`~/.cache/roller/thumbs`). To pre-generate them in bulk with ImageMagick:
 
 ```bash
 ./scripts/cache.sh ~/Projects/roller
@@ -128,17 +128,17 @@ Wallpapers searched recursively under `wallpaper_path` (`.jpg` `.jpeg` `.png` `.
 
 ```
 roller/
-├── qml/Main.qml          # LayerShell overlay fullscreen transparent, 678 centered
-├── qml/Carousel.qml      # Canvas 1.6/1.1 0.3 border 4
-├── qml/ColorFilter.qml   # Search-only bar
-├── src/main.cpp          # QGuiApplication + LayerShell
-├── src/backend/Color.cpp
-├── src/backend/Repository.cpp
-├── src/backend/Metadata.cpp
-├── src/backend/Model.cpp
-├── src/backend/Config.cpp
-├── src/backend/Awww.cpp
-├── src/backend/Backend.cpp
-├── scripts/cache.sh
+├── qml/Main.qml                        # LayerShell overlay, centered content, keybinds
+├── qml/Carousel.qml                    # Canvas carousel, FrameAnimation, wrap
+├── qml/SearchBar.qml                   # Search field, debounced
+├── src/main.cpp                        # QGuiApplication, wiring, QML engine
+├── src/backend/WallpaperRepository.cpp # Recursive scan of wallpaper_path
+├── src/backend/WallpaperModel.cpp      # QAbstractListModel, path/name/thumb
+├── src/backend/WallpaperFilterProxy.cpp# QSortFilterProxyModel, name search
+├── src/backend/ThumbnailCache.cpp      # Background thumbs (QtConcurrent)
+├── src/backend/PickerController.cpp    # Search, apply, refresh
+├── src/backend/AppConfig.cpp           # config.json wrapper
+├── src/backend/Awww.cpp                # awww/swww invocation
+├── scripts/cache.sh                    # Optional batch thumbnail generation
 └── config.json
 ```

@@ -25,7 +25,7 @@ void WallpaperModel::onThumbReady(const QString &src, const QString &thumb) {
         break;
     }
 }
-void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVariantMap> &meta){
+void WallpaperModel::setItems(const QStringList &paths){
     beginResetModel();
     m_items.clear();
     for(auto &p: paths){
@@ -33,17 +33,10 @@ void WallpaperModel::setItems(const QStringList &paths, const QMap<QString, QVar
         QString hash = QString::fromUtf8(QCryptographicHash::hash(p.toUtf8(), QCryptographicHash::Md5).toHex());
         QString ext = QFileInfo(p).suffix().toLower();
         if (ext.isEmpty()) ext = "jpg";
-        QString hashedName = hash + "." + ext;
-        QString thumbHashed = QDir(cacheDir).filePath(hashedName);
-        QString thumbOld = QDir(cacheDir).filePath(name);
-        QString thumb;
-        if (QFileInfo::exists(thumbHashed)) thumb = thumbHashed;
-        else if (QFileInfo::exists(thumbOld)) {
-            QFile::copy(thumbOld, thumbHashed);
-            thumb = thumbHashed;
-        } else thumb = p;
-        QString thumbUrl = QUrl::fromLocalFile(thumb).toString();
-        m_items.append({p,name,thumbUrl});
+        QString thumbHashed = QDir(cacheDir).filePath(hash + "." + ext);
+        // fall back to the original until ThumbnailCache produces the thumb
+        QString thumb = QFileInfo::exists(thumbHashed) ? thumbHashed : p;
+        m_items.append({p,name,QUrl::fromLocalFile(thumb).toString()});
     }
     endResetModel();
     emit countChanged();

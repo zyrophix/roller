@@ -14,7 +14,6 @@
 #endif
 #include "backend/AppConfig.h"
 #include "backend/WallpaperRepository.h"
-#include "backend/MetadataStore.h"
 #include "backend/WallpaperModel.h"
 #include "backend/WallpaperFilterProxy.h"
 #include "backend/ThumbnailCache.h"
@@ -60,16 +59,13 @@ int main(int argc, char *argv[]) {
     AppConfig cfg(cfgObj);
     WallpaperRepository repo(wallpaperDir);
     repo.refresh();
-    MetadataStore store(QDir(cacheDir).filePath("metadata.json"));
-    store.load();
-    repo.setMetadata(store.data);
     WallpaperModel sourceModel;
     sourceModel.setDirs(wallpaperDir, cacheDir);
     WallpaperFilterProxy proxyModel;
     proxyModel.setSource(&sourceModel);
     ThumbnailCache thumbCache(cacheDir);
     QObject::connect(&thumbCache, &ThumbnailCache::thumbReady, &sourceModel, &WallpaperModel::onThumbReady);
-    PickerController backend(&repo, &store, &sourceModel, &proxyModel, &cfg);
+    PickerController backend(&repo, &sourceModel, &proxyModel, &cfg);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("wallpaperModel", &proxyModel);

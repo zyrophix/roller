@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCryptographicHash>
+#include <QFile>
 #include <QImageReader>
 #include <QImage>
 #include <QtConcurrent>
@@ -18,6 +19,12 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
             if (ext.isEmpty()) ext = "jpg";
             QString thumb = QDir(cacheDir).filePath(hash + "." + ext);
             if (QFileInfo::exists(thumb)) continue;
+            // migrate legacy basename-keyed thumbs produced by older versions
+            QString legacy = QDir(cacheDir).filePath(QFileInfo(p).fileName());
+            if (QFileInfo::exists(legacy) && QFile::copy(legacy, thumb)) {
+                QMetaObject::invokeMethod(this, [this, p, thumb]{ emit thumbReady(p, thumb); }, Qt::QueuedConnection);
+                continue;
+            }
             QImageReader r(p);
             r.setAutoTransform(true);
             if (!r.canRead()) continue;

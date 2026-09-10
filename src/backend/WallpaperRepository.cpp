@@ -16,5 +16,4 @@ void WallpaperRepository::refresh() {
         return QFileInfo(a).fileName().toLower() < QFileInfo(b).fileName().toLower();
     });
 }
-void WallpaperRepository::setMetadata(const QMap<QString, QVariantMap> &m){ metadata=m; }
 QStringList WallpaperRepository::getAll() const { return wallpapers; }

@@ -19,7 +19,6 @@ find_package(LayerShellQt QUIET)
 qt_add_executable(roller
     src/main.cpp
     src/backend/WallpaperRepository.cpp
-    src/backend/MetadataStore.cpp
     src/backend/WallpaperModel.cpp
     src/backend/WallpaperFilterProxy.cpp
     src/backend/ThumbnailCache.cpp

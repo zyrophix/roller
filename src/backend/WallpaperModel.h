@@ -1,8 +1,6 @@
 #pragma once
 #include <QAbstractListModel>
 #include <QStringList>
-#include <QMap>
-#include <QVariant>
 
 class WallpaperModel : public QAbstractListModel {
     Q_OBJECT
@@ -14,7 +12,7 @@ public:
     QHash<int,QByteArray> roleNames() const override;
 
     void setDirs(const QString &wallpaperDir, const QString &cacheDir);
-    void setItems(const QStringList &paths, const QMap<QString, QVariantMap> &meta);
+    void setItems(const QStringList &paths);
 
     Q_INVOKABLE int count() const { return m_items.size(); }
     Q_INVOKABLE QString get_path_at(int idx) const;

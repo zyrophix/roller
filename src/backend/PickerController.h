@@ -1,7 +1,6 @@
 #pragma once
 #include <QObject>
 #include "WallpaperRepository.h"
-#include "MetadataStore.h"
 #include "WallpaperModel.h"
 #include "WallpaperFilterProxy.h"
 #include "AppConfig.h"
@@ -9,7 +8,7 @@
 class PickerController : public QObject {
     Q_OBJECT
 public:
-    explicit PickerController(WallpaperRepository *repo, MetadataStore *store, WallpaperModel *model, WallpaperFilterProxy *proxy, AppConfig *cfg, QObject *parent=nullptr);
+    explicit PickerController(WallpaperRepository *repo, WallpaperModel *model, WallpaperFilterProxy *proxy, AppConfig *cfg, QObject *parent=nullptr);
     Q_INVOKABLE void setSearch(const QString &query);
     Q_INVOKABLE void applyWallpaper(const QString &path);
     void refresh();
@@ -19,7 +18,6 @@ signals:
 private:
     void applyFilters();
     WallpaperRepository *repo;
-    MetadataStore *store;
     WallpaperModel *model;
     WallpaperFilterProxy *proxy;
     AppConfig *cfg;
