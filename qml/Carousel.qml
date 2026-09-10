@@ -26,7 +26,7 @@ Item {
     property real extraWidth: tileWidth * (horizontalScale - 1.0)
     property real margin: tileWidth * 0.25
     property int count: 0
-    property int visualCenter: Math.floor(visualSelection)
+    property int visualCenter: Math.round(visualSelection)
 
     Connections {
         target: root.model
