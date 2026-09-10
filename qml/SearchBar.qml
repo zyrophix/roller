@@ -57,6 +57,7 @@ Rectangle {
             onTextChanged: { root.pendingQuery = text; debounce.restart() }
             onActiveFocusChanged: if (activeFocus) root.searchMode = true
             Keys.onPressed: (event) => {
+                let ctrl = event.modifiers & Qt.ControlModifier
                 if (event.key === Qt.Key_Escape) {
                     searchField.text = ""
                     debounce.stop()
@@ -66,6 +67,12 @@ Rectangle {
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     debounce.stop()
                     root.searchChanged(searchField.text)
+                    root.searchMode = false
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Slash || (ctrl && event.key === Qt.Key_F)) {
+                    searchField.text = ""
+                    debounce.stop()
+                    root.searchChanged("")
                     root.searchMode = false
                     event.accepted = true
                 }

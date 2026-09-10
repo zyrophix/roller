@@ -19,7 +19,6 @@ ApplicationWindow {
     LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityExclusive
     LayerShell.Window.scope: "roller"
 
-    property int selectedIndex: 0
     property int prevCount: 0
 
     function applySelected() {
@@ -88,10 +87,9 @@ ApplicationWindow {
                 horizontalScale: config ? config.horizontalScale : 1.6
                 verticalScale: config ? config.verticalScale : 1.1
                 countVisible: config ? config.numberOfPictures || 5 : 5
-                onSelectedIndexChanged: win.selectedIndex = selectedIndex
-                onWallpaperClicked: (idx) => win.selectedIndex = idx
+                onWallpaperClicked: (idx) => carousel.setSelected(idx)
                 onApplyRequested: (idx) => {
-                    win.selectedIndex = idx
+                    carousel.setSelected(idx)
                     win.applySelected()
                 }
             }
@@ -181,7 +179,6 @@ ApplicationWindow {
                 if (win.prevCount === 0) carousel.setSelectedImmediate(0)
                 else carousel.setSelected(0)
             }
-            win.selectedIndex = 0
             win.prevCount = cnt
             if (!searchBar.searchMode) {
                 keyHandler.forceActiveFocus()

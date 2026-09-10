@@ -26,7 +26,7 @@ Item {
     property real extraWidth: tileWidth * (horizontalScale - 1.0)
     property real margin: tileWidth * 0.25
     property int count: 0
-    property int visualCenter: Math.round(visualSelection)
+    property int visualCenter: Math.floor(visualSelection)
 
     Connections {
         target: root.model
@@ -109,12 +109,15 @@ Item {
         id: anim
         running: false
         onTriggered: {
+            let f = anim.frameTime * 60
+            let kx = 1 - Math.pow(1 - 0.15, f)
+            let ks = 1 - Math.pow(1 - 0.22, f)
             let dx = targetX - contentX
             let ds = targetSelection - visualSelection
             let doneX = Math.abs(dx) < 0.5
             let doneS = Math.abs(ds) < 0.01
-            if (doneX) contentX = targetX; else contentX += dx * 0.15
-            if (doneS) visualSelection = targetSelection; else visualSelection += ds * 0.22
+            if (doneX) contentX = targetX; else contentX += dx * kx
+            if (doneS) visualSelection = targetSelection; else visualSelection += ds * ks
             if (!isSmallCount && count>0 && Math.abs(visualSelection) >= count) {
                 let off = Math.floor(visualSelection / count) * count
                 visualSelection -= off; targetSelection -= off
@@ -248,6 +251,7 @@ Item {
                 on_VChanged: requestPaint()
                 on_CChanged: requestPaint()
                 onPaint: {
+                    if (!visible) return
                     var ctx = getContext("2d")
                     ctx.reset()
                     // clip parallelogram
@@ -296,8 +300,6 @@ Item {
                 }
                 Component.onCompleted: requestPaint()
                 Connections { target: hiddenImg; function onStatusChanged(){ canvas.requestPaint() } }
-                Connections { target: root; function onVisualSelectionChanged(){ canvas.requestPaint() } }
-                Connections { target: root; function onContentXChanged(){ canvas.requestPaint() } }
             }
 
             // Click handling
