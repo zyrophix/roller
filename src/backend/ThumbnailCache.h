@@ -1,4 +1,5 @@
 #pragma once
+#include <QFuture>
 #include <QObject>
 #include <QStringList>
 
@@ -6,6 +7,7 @@ class ThumbnailCache : public QObject {
     Q_OBJECT
 public:
     explicit ThumbnailCache(const QString &cacheDir, QObject *parent=nullptr);
+    ~ThumbnailCache() override;
     void setTargetHeight(int h) { thumbHeight = qMax(1, h); }
     void generateMissing(const QStringList &paths);
 signals:
@@ -13,4 +15,5 @@ signals:
 private:
     QString cacheDir;
     int thumbHeight = 500;
+    QFuture<void> mFuture;
 };
