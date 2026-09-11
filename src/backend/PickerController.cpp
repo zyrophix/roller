@@ -4,6 +4,7 @@
 PickerController::PickerController(WallpaperRepository *r, WallpaperModel *m, WallpaperFilterProxy *px, AppConfig *c, QObject *p): QObject(p), repo(r), model(m), proxy(px), cfg(c) {}
 
 void PickerController::refresh(){
+    if (repo) repo->refresh();
     applyFilters();
 }
 void PickerController::applyFilters(){

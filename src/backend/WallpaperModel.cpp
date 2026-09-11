@@ -5,6 +5,16 @@
 #include <QCryptographicHash>
 
 WallpaperModel::WallpaperModel(QObject *p): QAbstractListModel(p) {}
+
+// version the URL so an overwritten thumb (same path, new pixels) is
+// treated as a new source by QML instead of served from the decode cache
+static QString thumbUrl(const QString &thumb) {
+    QString u = QUrl::fromLocalFile(thumb).toString();
+    QFileInfo fi(thumb);
+    if (fi.exists())
+        u += QStringLiteral("?m=%1s%2").arg(fi.lastModified().toMSecsSinceEpoch()).arg(fi.size());
+    return u;
+}
 int WallpaperModel::rowCount(const QModelIndex &p) const { return p.isValid()?0:m_items.size(); }
 QVariant WallpaperModel::data(const QModelIndex &idx, int role) const {
     if (!idx.isValid() || idx.row()>=m_items.size()) return {};
@@ -20,7 +30,7 @@ QHash<int,QByteArray> WallpaperModel::roleNames() const {
 void WallpaperModel::setDirs(const QString &w, const QString &c){ wallpaperDir=w; cacheDir=c; }
 void WallpaperModel::onThumbReady(const QString &src, const QString &thumb) {
     for (int i=0;i<m_items.size();++i) if (m_items[i].path==src) {
-        m_items[i].thumb = QUrl::fromLocalFile(thumb).toString();
+        m_items[i].thumb = thumbUrl(thumb);
         emit dataChanged(index(i,0), index(i,0), {ThumbRole});
         break;
     }
@@ -35,8 +45,9 @@ void WallpaperModel::setItems(const QStringList &paths){
         if (ext.isEmpty()) ext = "jpg";
         QString thumbHashed = QDir(cacheDir).filePath(hash + "." + ext);
         // fall back to the original until ThumbnailCache produces the thumb
-        QString thumb = QFileInfo::exists(thumbHashed) ? thumbHashed : p;
-        m_items.append({p,name,QUrl::fromLocalFile(thumb).toString()});
+        QString thumb = QFileInfo::exists(thumbHashed) ? thumbUrl(thumbHashed)
+                                                          : QUrl::fromLocalFile(p).toString();
+        m_items.append({p,name,thumb});
     }
     endResetModel();
     emit countChanged();

@@ -32,7 +32,7 @@ ApplicationWindow {
     }
 
     Timer { id: quitTimer; interval: 100; onTriggered: Qt.quit() }
-    function fadeQuit() { content.opacity = 0; quitTimer.restart() }
+    function fadeQuit() { if (quitTimer.running) return; content.opacity = 0; quitTimer.restart() }
 
     MouseArea {
         anchors.fill: parent
@@ -89,7 +89,7 @@ ApplicationWindow {
                 horizontalScale: config ? config.horizontalScale : 1.6
                 verticalScale: config ? config.verticalScale : 1.1
                 countVisible: config ? config.numberOfPictures || 5 : 5
-                onWallpaperClicked: (idx) => carousel.setSelected(idx)
+                onWallpaperClicked: (idx) => { /* selection already set by the delegate */ }
                 onApplyRequested: (idx) => {
                     carousel.setSelected(idx)
                     win.applySelected()
@@ -139,16 +139,15 @@ ApplicationWindow {
             let k = event.key
             let ctrl = event.modifiers & Qt.ControlModifier
             if (k === Qt.Key_Escape && searchBar.searchMode) {
-                searchBar.searchMode = false
-                win.updateSearch("")
+                searchBar.clearSearch()
                 keyHandler.forceActiveFocus()
                 event.accepted = true
                 return
             }
             if (k === Qt.Key_Slash || key === "/" || (ctrl && k === Qt.Key_F)) {
                 let willBeSearch = !searchBar.searchMode
-                searchBar.searchMode = willBeSearch
-                if (!willBeSearch) win.updateSearch("")
+                if (!willBeSearch) searchBar.clearSearch()
+                else searchBar.searchMode = true
                 event.accepted = true
                 return
             }
@@ -160,6 +159,8 @@ ApplicationWindow {
                 if (searchBar.searchMode) {
                     searchBar.searchMode = false
                     keyHandler.forceActiveFocus()
+                    event.accepted = true
+                    return
                 }
                 win.applySelected(); event.accepted = true
             }
@@ -179,7 +180,9 @@ ApplicationWindow {
             let cnt = wallpaperModel ? wallpaperModel.countProp : 0
             if (cnt > 0) {
                 if (win.prevCount === 0) carousel.setSelectedImmediate(0)
-                else carousel.setSelected(0)
+                // filter keystrokes: re-center on the current index instead
+                // of yanking selection back to 0 every time
+                else carousel.setSelected(carousel.selectedIndex)
             }
             win.prevCount = cnt
             if (!searchBar.searchMode) {

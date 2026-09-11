@@ -32,12 +32,7 @@ Rectangle {
             Text { anchors.centerIn: parent; text: "‹"; color: "white"; font.pixelSize: 18 }
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
-                    searchField.text = ""
-                    debounce.stop()
-                    root.searchChanged("")
-                    root.searchMode = false
-                }
+                onClicked: root.clearSearch()
             }
         }
 
@@ -57,25 +52,17 @@ Rectangle {
             onTextChanged: { root.pendingQuery = text; debounce.restart() }
             onActiveFocusChanged: if (activeFocus) root.searchMode = true
             Keys.onPressed: (event) => {
-                let ctrl = event.modifiers & Qt.ControlModifier
                 if (event.key === Qt.Key_Escape) {
-                    searchField.text = ""
-                    debounce.stop()
-                    root.searchChanged("")
-                    root.searchMode = false
+                    root.clearSearch()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     debounce.stop()
+                    root.pendingQuery = searchField.text
                     root.searchChanged(searchField.text)
                     root.searchMode = false
                     event.accepted = true
-                } else if (event.key === Qt.Key_Slash || (ctrl && event.key === Qt.Key_F)) {
-                    searchField.text = ""
-                    debounce.stop()
-                    root.searchChanged("")
-                    root.searchMode = false
-                    event.accepted = true
                 }
+                // note: '/' types normally here; the global toggle lives in keyHandler
             }
         }
         Timer {
@@ -99,6 +86,13 @@ Rectangle {
 
     function setSearchMode(on) { root.searchMode = on }
     function isSearchMode() { return root.searchMode }
+    function clearSearch() {
+        searchField.text = ""
+        debounce.stop()
+        root.pendingQuery = ""
+        root.searchChanged("")
+        root.searchMode = false
+    }
 
     onSearchModeChanged: {
         if (searchMode) searchField.forceActiveFocus()
