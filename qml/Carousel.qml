@@ -111,15 +111,17 @@ Item {
         id: anim
         running: false
         onTriggered: {
-            let f = Math.max(anim.frameTime, 1/240) * 60
-            let kx = 1 - Math.pow(1 - 0.15, f)
-            let ks = 1 - Math.pow(1 - 0.22, f)
+            // single rate for position and scale: highlight no longer leads
+            // the slide. f clamped both sides: first frame after idle is a
+            // full step (no frozen start), lag spikes at most double it.
+            let f = Math.min(Math.max(anim.frameTime, 1/60), 1/30) * 60
+            let k = 1 - Math.pow(1 - 0.18, f)
             let dx = targetX - contentX
             let ds = targetSelection - visualSelection
             let doneX = Math.abs(dx) < 0.5
             let doneS = Math.abs(ds) < 0.01
-            if (doneX) contentX = targetX; else contentX += dx * kx
-            if (doneS) visualSelection = targetSelection; else visualSelection += ds * ks
+            if (doneX) contentX = targetX; else contentX += dx * k
+            if (doneS) visualSelection = targetSelection; else visualSelection += ds * k
             if (!isSmallCount && count>0 && Math.abs(visualSelection) >= count) {
                 let off = Math.floor(visualSelection / count) * count
                 visualSelection -= off; targetSelection -= off
@@ -298,6 +300,21 @@ Item {
                     root.wallpaperClicked(realIdx)
                 }
             }
+        }
+    }
+
+    // Decode preloader: warms QML's pixmap cache for every wallpaper, so a
+    // window rebind mid-slide swaps to an already-decoded image in the same
+    // frame instead of showing stale tiles for 1-3 frames. Invisible items
+    // still decode; they never paint.
+    Repeater {
+        model: root.count
+        delegate: Image {
+            required property int index
+            source: root.model ? root.model.get_thumb_at(index) : ""
+            visible: false
+            asynchronous: true
+            cache: true
         }
     }
 }
