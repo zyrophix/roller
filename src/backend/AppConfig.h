@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QJsonObject>
+#include <cmath>
 
 class AppConfig : public QObject {
     Q_OBJECT
@@ -28,10 +29,16 @@ public:
     explicit AppConfig(const QJsonObject &data, QObject *parent=nullptr);
     QString borderColor() const { return obj.value("border_color").toString("#b4befe"); }
     int borderWidth() const { return obj.value("border_width").toInt(2); }
-    int numberOfPictures() const { return obj.value("number_of_pictures").toInt(5); }
-    int panelHeight() const { return obj.value("panel_height").toInt(500); }
-    double horizontalScale() const { return obj.value("selected_horizontal_scale").toDouble(1.6); }
-    double verticalScale() const { return obj.value("selected_vertical_scale").toDouble(1.1); }
+    int numberOfPictures() const { return qMax(1, obj.value("number_of_pictures").toInt(5)); }
+    int panelHeight() const { return qMax(1, obj.value("panel_height").toInt(500)); }
+    double horizontalScale() const {
+        double v = obj.value("selected_horizontal_scale").toDouble(1.6);
+        return (std::isfinite(v) && v >= 1.0) ? v : 1.6;
+    }
+    double verticalScale() const {
+        double v = obj.value("selected_vertical_scale").toDouble(1.1);
+        return (std::isfinite(v) && v >= 1.0) ? v : 1.1;
+    }
     QString searchHintText() const { return obj.value("search_hint_text").toString("Press Ctrl + F or / to search"); }
     bool showSearchHint() const { return obj.value("show_search_hint").toBool(true); }
     QString searchBackgroundColor() const { return obj.value("search_background_color").toString("#313244"); }
