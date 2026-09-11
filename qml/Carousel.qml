@@ -49,6 +49,11 @@ Item {
         let delta = idx - cur
         if (delta > count/2) delta -= count
         if (delta < -count/2) delta += count
+        // filter keystrokes re-invoke this with the current index: fully
+        // settled means nothing to do, skip the restart so typing never
+        // hitches an idle carousel
+        if (delta === 0 && Math.abs(targetSelection - visualSelection) < 0.01
+                && Math.abs(targetX - contentX) < 0.5) return
         targetSelection += delta
         ensureVisible(targetSelection)
         startAnim()
@@ -131,6 +136,8 @@ Item {
         }
     }
     readonly property int selectedIndex: ((Math.round(visualSelection)% (count||1))+(count||1))%(count||1)
+    // where the carousel is heading (== selectedIndex once settled)
+    readonly property int committedIndex: ((Math.round(targetSelection)% (count||1))+(count||1))%(count||1)
 
     WheelHandler {
         onWheel: (e) => {

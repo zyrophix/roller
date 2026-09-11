@@ -14,7 +14,7 @@ public:
     void refresh();
 signals:
     void wallpapersChanged();
-    void wallpaperApplied(const QString &path);
+    void wallpaperApplied(const QString &path, bool ok);
 private:
     void applyFilters();
     WallpaperRepository *repo;

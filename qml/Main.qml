@@ -20,10 +20,12 @@ ApplicationWindow {
     LayerShell.Window.scope: "roller"
 
     property int prevCount: 0
+    property string applyError: ""
 
     function applySelected() {
+        win.applyError = ""
         if (!wallpaperModel || wallpaperModel.countProp === 0) return
-        let path = wallpaperModel.get_path_at(carousel.selectedIndex)
+        let path = wallpaperModel.get_path_at(carousel.committedIndex)
         if (path && backend) backend.applyWallpaper(path)
     }
 
@@ -127,6 +129,14 @@ ApplicationWindow {
                 color: "#aaaaaa"
                 font.pixelSize: 11
             }
+            // Backend failure toast
+            Label {
+                Layout.alignment: Qt.AlignHCenter
+                text: win.applyError
+                visible: win.applyError !== ""
+                color: "#f38ba8"
+                font.pixelSize: 11
+            }
         }
     }
 
@@ -190,9 +200,8 @@ ApplicationWindow {
             }
             // when in searchMode, keep focus on searchField (handled by SearchBar)
         }
-        function onWallpaperApplied(path) {
-            // Uncomment to auto-close after apply:
-            // Qt.quit()
+        function onWallpaperApplied(path, ok) {
+            win.applyError = ok ? "" : "Failed to apply wallpaper — backend missing?"
         }
     }
 

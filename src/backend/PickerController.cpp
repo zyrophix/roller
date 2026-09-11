@@ -13,12 +13,16 @@ void PickerController::applyFilters(){
     emit wallpapersChanged();
 }
 void PickerController::setSearch(const QString &q){
-    if (q == searchQuery) return;
-    searchQuery = q;
+    QString nq = q.trimmed().toLower();
+    if (nq == searchQuery) return;
+    searchQuery = nq;
     if (proxy) proxy->setSearchQuery(q);
     emit wallpapersChanged();
 }
 void PickerController::applyWallpaper(const QString &path){
-    ::applyWallpaper(path, cfg->transitionType(), cfg->transitionPos(), cfg->transitionDuration(), cfg->transitionFps());
-    emit wallpaperApplied(path);
+    bool ok = model && cfg
+        ? ::applyWallpaper(path, cfg->transitionType(), cfg->transitionPos(),
+                           cfg->transitionDuration(), cfg->transitionFps())
+        : false;
+    emit wallpaperApplied(path, ok);
 }

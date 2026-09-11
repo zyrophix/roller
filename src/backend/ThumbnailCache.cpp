@@ -83,7 +83,10 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
             r.setScaledSize(QSize(w, h));
             QImage img = r.read();
             if (img.isNull()) continue;
-            img.save(thumb, nullptr, 85);
+            if (!img.save(thumb, nullptr, 85)) {
+                QFile::remove(thumb);
+                continue;
+            }
             emitThumbReady(guard, p, thumb);
         }
     });
