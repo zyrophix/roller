@@ -151,7 +151,6 @@ Item {
                 let idx = Math.round((nx + width/2 - tileWidth/2) / step)
                 idx = Math.max(0, Math.min(count - 1, idx))
                 targetSelection = idx
-                visualSelection = idx
             } else {
                 let idx = Math.round((nx + width/2 - tileWidth/2) / step)
                 idx = ((idx % count) + count) % count
@@ -160,7 +159,6 @@ Item {
                 if (delta > count/2) delta -= count
                 if (delta < -count/2) delta += count
                 targetSelection += delta
-                visualSelection = targetSelection
             }
             targetX = nx
             startAnim()
@@ -189,23 +187,10 @@ Item {
         onReleased: (m)=>{
             if (root.count === 0) { dragging=false; return }
             if(dragging){
-                if (isSmallCount) {
-                    let idx = Math.round((targetX + width/2 - tileWidth/2) / step)
-                    idx = Math.max(0, Math.min(count - 1, idx))
-                    targetSelection = idx; visualSelection = idx
-                    ensureVisible(idx)
-                } else {
-                    let idx = Math.round((targetX + width/2 - tileWidth/2) / step)
-                    idx = ((idx % count) + count) % count
-                    let cur = ((Math.round(targetSelection) % count) + count) % count
-                    let delta = idx - cur
-                    if (delta > count/2) delta -= count
-                    if (delta < -count/2) delta += count
-                    targetSelection += delta
-                    visualSelection = targetSelection
-                    ensureVisible(targetSelection)
-                    anim.restart()
-                }
+                // snap the target; visualSelection lerps there so scale
+                // travels together with position instead of popping
+                let idx = Math.round((targetX + width/2 - tileWidth/2) / step)
+                root.setSelected(idx)
             }
             dragging=false
         }
@@ -220,10 +205,23 @@ Item {
             property int center: Math.round(root.visualSelection)
             property int vIdx: root.isSmallCount ? index : center - root.visibleRange + index
             property int realIdx: root.isSmallCount ? index : ((vIdx % root.count)+root.count)%root.count
-            // these come from model
-            property string wallpaperPath: root.model ? root.model.get_path_at(realIdx) : ""
-            property string wallpaperName: root.model ? root.model.get_name_at(realIdx) : ""
-            property string thumbnailPath: root.model ? root.model.get_thumb_at(realIdx) : ""
+            // these come from model; root.model.rev subscribes the binding
+            // so dataChanged (new thumbs, refilter) re-evaluates it
+            property string wallpaperPath: {
+                if (!root.model) return ""
+                root.model.rev
+                return root.model.get_path_at(realIdx)
+            }
+            property string wallpaperName: {
+                if (!root.model) return ""
+                root.model.rev
+                return root.model.get_name_at(realIdx)
+            }
+            property string thumbnailPath: {
+                if (!root.model) return ""
+                root.model.rev
+                return root.model.get_thumb_at(realIdx)
+            }
 
             property real dist: Math.abs(vIdx - root.visualSelection)
             property real progress: Math.max(0, 1 - dist)
@@ -318,10 +316,16 @@ Item {
         model: root.count
         delegate: Image {
             required property int index
-            source: root.model ? root.model.get_thumb_at(index) : ""
+            source: {
+                if (!root.model) return ""
+                root.model.rev
+                return root.model.get_thumb_at(index)
+            }
             visible: false
             asynchronous: true
             cache: true
+            // same decode key as the visible tiles, or the cache misses
+            sourceSize.height: Math.round(root.panelHeight * root.verticalScale)
         }
     }
 }

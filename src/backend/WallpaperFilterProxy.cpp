@@ -5,6 +5,9 @@ WallpaperFilterProxy::WallpaperFilterProxy(QObject *p): QSortFilterProxyModel(p)
     connect(this, &QSortFilterProxyModel::rowsRemoved, this, &WallpaperFilterProxy::countChanged);
     connect(this, &QSortFilterProxyModel::modelReset, this, &WallpaperFilterProxy::countChanged);
     connect(this, &QSortFilterProxyModel::layoutChanged, this, &WallpaperFilterProxy::countChanged);
+    connect(this, &QSortFilterProxyModel::dataChanged, this, [this]{ bumpRev(); });
+    connect(this, &QSortFilterProxyModel::modelReset, this, [this]{ bumpRev(); });
+    connect(this, &QSortFilterProxyModel::layoutChanged, this, [this]{ bumpRev(); });
 }
 QHash<int, QByteArray> WallpaperFilterProxy::roleNames() const {
     if (srcModel) return srcModel->roleNames();
