@@ -98,7 +98,8 @@ Item {
         root.count = model ? model.count() : 0
     }
     onWidthChanged: {
-        // keep centered on resize
+        // keep centered on resize, but never cancel an in-flight step
+        if (anim.running) return
         let idx = Math.round(visualSelection)
         if (count>0 && width>100) {
             contentX = idx*step + tileWidth/2 - width/2
@@ -131,6 +132,7 @@ Item {
 
     WheelHandler {
         onWheel: (e) => {
+            if (root.count === 0) return
             let d = Math.abs(e.angleDelta.y) >= Math.abs(e.angleDelta.x) ? e.angleDelta.y : e.angleDelta.x
             let nx = targetX - d * 0.8
             if (isSmallCount) {
@@ -176,6 +178,7 @@ Item {
             }
         }
         onReleased: (m)=>{
+            if (root.count === 0) { dragging=false; return }
             if(dragging){
                 if (isSmallCount) {
                     let idx = Math.round((targetX + width/2 - tileWidth/2) / step)
@@ -205,7 +208,7 @@ Item {
         model: root.count>0 ? (root.isSmallCount ? root.count : root.visibleRange*2+1) : 0
         delegate: Item {
             required property int index
-            property int center: Math.floor(root.visualSelection)
+            property int center: Math.round(root.visualSelection)
             property int vIdx: root.isSmallCount ? index : center - root.visibleRange + index
             property int realIdx: root.isSmallCount ? index : ((vIdx % root.count)+root.count)%root.count
             // these come from model
