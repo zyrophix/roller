@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
     WallpaperFilterProxy proxyModel;
     proxyModel.setSource(&sourceModel);
     ThumbnailCache thumbCache(cacheDir);
+    thumbCache.setTargetHeight(qRound(cfg.panelHeight() * cfg.verticalScale()));
     QObject::connect(&thumbCache, &ThumbnailCache::thumbReady, &sourceModel, &WallpaperModel::onThumbReady);
     PickerController backend(&repo, &sourceModel, &proxyModel, &cfg);
 
