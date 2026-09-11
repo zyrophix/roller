@@ -16,6 +16,8 @@ class AppConfig : public QObject {
     Q_PROPERTY(QString searchTextColor READ searchTextColor NOTIFY changed)
     Q_PROPERTY(QString searchHintColor READ searchHintColor NOTIFY changed)
     Q_PROPERTY(QString carouselSelectedBorder READ carouselSelectedBorder NOTIFY changed)
+    Q_PROPERTY(int idleBorderWidth READ idleBorderWidth NOTIFY changed)
+    Q_PROPERTY(QString idleBorderColor READ idleBorderColor NOTIFY changed)
     Q_PROPERTY(QString backend READ backend NOTIFY changed)
     Q_PROPERTY(QString transitionType READ transitionType NOTIFY changed)
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
@@ -25,7 +27,7 @@ class AppConfig : public QObject {
 public:
     explicit AppConfig(const QJsonObject &data, QObject *parent=nullptr);
     QString borderColor() const { return obj.value("border_color").toString("#b4befe"); }
-    int borderWidth() const { return obj.value("border_width").toInt(4); }
+    int borderWidth() const { return obj.value("border_width").toInt(2); }
     int numberOfPictures() const { return obj.value("number_of_pictures").toInt(5); }
     int panelHeight() const { return obj.value("panel_height").toInt(500); }
     double horizontalScale() const { return obj.value("selected_horizontal_scale").toDouble(1.6); }
@@ -36,6 +38,8 @@ public:
     QString searchTextColor() const { return obj.value("search_text_color").toString("#cdd6f4"); }
     QString searchHintColor() const { return obj.value("search_hint_color").toString("#a6adc8"); }
     QString carouselSelectedBorder() const { return obj.value("carousel_selected_border").toString("#b4befe"); }
+    int idleBorderWidth() const { return obj.value("idle_border_width").toInt(2); }
+    QString idleBorderColor() const { return obj.value("idle_border_color").toString("#585b70"); }
     QString backend() const { return obj.value("backend").toString("awww"); }
     QString transitionType() const { return obj.value("transition_type").toString("grow"); }
     QString transitionPos() const { return obj.value("transition_pos").toString("0.5,0.5"); }

@@ -3,7 +3,7 @@
     "cache_path": "/home/you/.cache/roller/thumbs",
     "number_of_pictures": 5,
     "border_color": "#b4befe",
-    "border_width": 4,
+    "border_width": 2,
     "panel_height": 500,
     "selected_horizontal_scale": 1.6,
     "selected_vertical_scale": 1.1,
@@ -20,5 +20,7 @@
     "transition_fps": 60,
     "cache_batch_size": 20,
     "backend": "awww",
-    "use_layer_shell": true
+    "use_layer_shell": true,
+    "idle_border_width": 2,
+    "idle_border_color": "#585b70"
 }

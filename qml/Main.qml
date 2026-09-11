@@ -82,7 +82,9 @@ ApplicationWindow {
                 Layout.bottomMargin: 16
                 model: wallpaperModel
                 borderColor: config ? config.carouselSelectedBorder : "#b4befe"
-                borderWidth: config ? config.borderWidth : 4
+                borderWidth: config ? config.borderWidth : 2
+                idleBorderWidth: config ? config.idleBorderWidth : 2
+                idleBorderColor: config ? config.idleBorderColor : "#585b70"
                 panelHeight: config ? config.panelHeight : 500
                 horizontalScale: config ? config.horizontalScale : 1.6
                 verticalScale: config ? config.verticalScale : 1.1

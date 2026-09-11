@@ -6,7 +6,9 @@ Item {
     property var model
     property int countVisible: 7
     property string borderColor: "#b4befe"
-    property int borderWidth: 4
+    property int borderWidth: 2
+    property int idleBorderWidth: 2
+    property string idleBorderColor: "#585b70"
     property real panelHeight: 500
     property real shear: 0.3
     property real spacing: 4.0
@@ -26,7 +28,6 @@ Item {
     property real extraWidth: tileWidth * (horizontalScale - 1.0)
     property real margin: tileWidth * 0.25
     property int count: 0
-    property int visualCenter: Math.round(visualSelection)
 
     Connections {
         target: root.model
@@ -109,7 +110,7 @@ Item {
         id: anim
         running: false
         onTriggered: {
-            let f = anim.frameTime * 60
+            let f = Math.max(anim.frameTime, 1/240) * 60
             let kx = 1 - Math.pow(1 - 0.15, f)
             let ks = 1 - Math.pow(1 - 0.22, f)
             let dx = targetX - contentX
@@ -214,15 +215,12 @@ Item {
 
             property real dist: Math.abs(vIdx - root.visualSelection)
             property real progress: Math.max(0, 1 - dist)
-            property real scaledW: root.tileWidth * (1 + 0.6 * progress)
-            property real scaledH: root.panelHeight * (1 + 0.1 * progress)
+            property real scaledW: root.tileWidth * (1 + (root.horizontalScale - 1.0) * progress)
+            property real scaledH: root.panelHeight * (1 + (root.verticalScale - 1.0) * progress)
             property real shearOff: root.shear * scaledH
             property real baseX: vIdx * root.step - root.contentX
-            property real compX: {
-                if (vIdx < root.visualCenter) return baseX - root.extraWidth/2
-                if (vIdx > root.visualCenter) return baseX + root.extraWidth/2
-                return baseX
-            }
+            property real compX: baseX + root.extraWidth/2
+                                 * Math.max(-1, Math.min(1, vIdx - root.visualSelection))
             // Original: left = x + tile/2 - scaledW/2 - shear/2
             x: compX + root.tileWidth/2 - scaledW/2 - shearOff/2
             y: (root.height - scaledH)/2
@@ -232,74 +230,60 @@ Item {
             visible: !(x > root.width + root.margin || x + width < -root.margin)
             property bool isSelected: root.isSmallCount ? realIdx === root.selectedIndex : vIdx === Math.round(root.visualSelection)
 
-            Image {
-                id: hiddenImg
-                source: thumbnailPath
-                visible: false
-                asynchronous: true
-                retainWhileLoading: true
-                cache: true
-                onStatusChanged: if (status===Image.Ready) canvas.requestPaint()
-            }
+            // Parallelogram clip: sheared box, image counter-sheared so the
+            // picture itself stays upright (matches the original clip+paint).
+            Item {
+                id: tileClip
+                width: scaledW
+                height: scaledH
+                clip: true
+                transform: Matrix4x4 {
+                    matrix: Qt.matrix4x4(1, -root.shear, 0, shearOff,
+                                         0, 1, 0, 0,
+                                         0, 0, 1, 0,
+                                         0, 0, 0, 1)
+                }
 
-            Canvas {
-                id: canvas
-                anchors.fill: parent
-                // trigger repaint when selection animates
-                property real _v: root.visualSelection
-                property real _c: root.contentX
-                on_VChanged: requestPaint()
-                on_CChanged: requestPaint()
-                onPaint: {
-                    if (!visible) return
-                    var ctx = getContext("2d")
-                    ctx.reset()
-                    // clip parallelogram
-                    ctx.beginPath()
-                    ctx.moveTo(shearOff, 0)
-                    ctx.lineTo(width, 0)
-                    ctx.lineTo(width - shearOff, height)
-                    ctx.lineTo(0, height)
-                    ctx.closePath()
-                    ctx.clip()
-
-                    // cover image — draw retained buffer too, never blank
-                    if (hiddenImg.status === Image.Ready || hiddenImg.implicitWidth > 0) {
-                        var pw = hiddenImg.sourceSize.width || hiddenImg.implicitWidth
-                        var ph = hiddenImg.sourceSize.height || hiddenImg.implicitHeight
-                        if (pw>0 && ph>0) {
-                            var scale = Math.max(width / pw, height / ph)
-                            var dw = pw * scale
-                            var dh = ph * scale
-                            var ox = (width - dw)/2
-                            var oy = (height - dh)/2
-                            // draw
-                            ctx.drawImage(hiddenImg, ox, oy, dw, dh)
-                            // dim unselected — original 0.16 black
-                            if (!isSelected) {
-                                ctx.fillStyle = "rgba(0,0,0,0.16)"
-                                ctx.fillRect(0,0,width,height)
-                            }
-                        }
-                    } else {
-                        ctx.clearRect(0,0,width,height)
-                    }
-
-                    // border for selected — width from config
-                    if (isSelected) {
-                        ctx.strokeStyle = root.borderColor
-                        ctx.lineWidth = root.borderWidth
-                        ctx.beginPath()
-                        ctx.moveTo(shearOff, 0)
-                        ctx.lineTo(width, 0)
-                        ctx.lineTo(width - shearOff, height)
-                        ctx.lineTo(0, height)
-                        ctx.closePath()
-                        ctx.stroke()
+                Image {
+                    source: thumbnailPath
+                    width: scaledW + shearOff
+                    height: scaledH
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    retainWhileLoading: true
+                    cache: true
+                    // fixed cap: scale-dependent sourceSize would re-decode every frame
+                    sourceSize.height: Math.round(root.panelHeight * root.verticalScale)
+                    transform: Matrix4x4 {
+                        matrix: Qt.matrix4x4(1, root.shear, 0, -shearOff,
+                                             0, 1, 0, 0,
+                                             0, 0, 1, 0,
+                                             0, 0, 0, 1)
                     }
                 }
-                Component.onCompleted: requestPaint()
-                Connections { target: hiddenImg; function onStatusChanged(){ canvas.requestPaint() } }
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "black"
+                    opacity: 0.16
+                    visible: !isSelected
+                }
+            }
+
+            // Border is stroked outside the clip, like the original reset_clip
+            Rectangle {
+                width: scaledW
+                height: scaledH
+                color: "transparent"
+                border.width: isSelected ? root.borderWidth : root.idleBorderWidth
+                border.color: isSelected ? root.borderColor : root.idleBorderColor
+                visible: border.width > 0
+                transform: Matrix4x4 {
+                    matrix: Qt.matrix4x4(1, -root.shear, 0, shearOff,
+                                         0, 1, 0, 0,
+                                         0, 0, 1, 0,
+                                         0, 0, 0, 1)
+                }
             }
 
             // Click handling
