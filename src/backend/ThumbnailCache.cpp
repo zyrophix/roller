@@ -4,6 +4,8 @@
 #include <QDir>
 #include <QSet>
 #include <QCryptographicHash>
+#include <QStandardPaths>
+#include <QProcess>
 #include <QFile>
 #include <QImageReader>
 #include <QImage>
@@ -17,6 +19,23 @@ ThumbnailCache::ThumbnailCache(const QString &dir, QObject *p): QObject(p), cach
 ThumbnailCache::~ThumbnailCache() {
     mFuture.cancel();
     mFuture.waitForFinished();
+}
+
+// QImageReader cannot decode video, so a video wallpaper gets a poster frame
+// pulled with ffmpeg. Seeks to 1s because the first frames of a clip are
+// often black.
+static QImage videoPosterFrame(const QString &path) {
+    const QString ffmpeg = QStandardPaths::findExecutable("ffmpeg");
+    if (ffmpeg.isEmpty()) return {};
+    QProcess p;
+    p.start(ffmpeg, {"-v", "error", "-ss", "1", "-i", path,
+                     "-frames:v", "1", "-f", "image2pipe", "-vcodec", "png", "pipe:1"});
+    if (!p.waitForStarted(5000)) return {};
+    if (!p.waitForFinished(30000)) { p.kill(); p.waitForFinished(2000); return {}; }
+    if (p.exitStatus() != QProcess::NormalExit || p.exitCode() != 0) return {};
+    QImage img;
+    if (!img.loadFromData(p.readAllStandardOutput(), "PNG")) return {};
+    return img;
 }
 
 static int thumbPixelHeight(const QString &path) {
@@ -75,8 +94,17 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
             }
             QImageReader r(p);
             r.setAutoTransform(true);
-            if (!r.canRead()) continue;
-            QSize src = r.size();
+            QImage img;
+            QSize src;
+            if (r.canRead()) {
+                src = r.size();
+            } else {
+                // not something QImageReader can decode: a video wallpaper
+                // gets a poster frame instead
+                img = videoPosterFrame(p);
+                if (img.isNull()) continue;
+                src = img.size();
+            }
             if (!src.isValid() || src.width() <= 0 || src.height() <= 0) continue;
             // height-driven sizing, like `-thumbnail xH`: width follows aspect
             int h = targetH;
@@ -88,9 +116,13 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
             // clamp against corrupt headers claiming absurd aspects
             w = qBound(1, w, qMin(4096, 4 * h));
             h = qMin(h, 4096);
-            r.setScaledSize(QSize(w, h));
-            QImage img = r.read();
-            if (img.isNull()) continue;
+            if (img.isNull()) {
+                r.setScaledSize(QSize(w, h));
+                img = r.read();
+                if (img.isNull()) continue;
+            } else if (img.height() != h) {
+                img = img.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            }
             if (!img.save(thumb, nullptr, 85)) {
                 QFile::remove(thumb);
                 continue;

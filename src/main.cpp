@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
     AppConfig cfg(cfgObj);
     cfg.setStateFile(QDir(QFileInfo(cacheDir).absolutePath()).filePath(".current"));
     WallpaperRepository repo(wallpaperDir);
+    repo.setVideoExtensions(cfg.videoExtensions());
     repo.refresh();
     WallpaperModel sourceModel;
     sourceModel.setDirs(wallpaperDir, cacheDir);

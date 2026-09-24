@@ -31,7 +31,6 @@ class AppConfig : public QObject {
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
     Q_PROPERTY(double transitionDuration READ transitionDuration NOTIFY changed)
     Q_PROPERTY(int transitionFps READ transitionFps NOTIFY changed)
-    Q_PROPERTY(bool useLayerShell READ useLayerShell NOTIFY changed)
 public:
     explicit AppConfig(const QJsonObject &data, QObject *parent=nullptr);
     QString borderColor() const { return obj.value("border_color").toString("#b4befe"); }
@@ -82,7 +81,6 @@ public:
     QString transitionPos() const { return obj.value("transition_pos").toString("0.5,0.5"); }
     double transitionDuration() const { return obj.value("transition_duration").toDouble(1.2); }
     int transitionFps() const { return obj.value("transition_fps").toInt(60); }
-    bool useLayerShell() const { return obj.value("use_layer_shell").toBool(false); }
     QJsonObject obj;
     QString stateFile;
 signals:

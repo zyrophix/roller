@@ -23,7 +23,6 @@
     "video_extensions": ["mp4", "webm", "mov", "avi", "mkv", "gif", "m4v", "flv", "wmv", "mpeg", "3gp"],
     "stable_copy_path": "",
     "post_apply_command": "",
-    "use_layer_shell": true,
     "idle_border_width": 2,
     "idle_border_color": "#585b70",
     "thumbnail_height": 512,

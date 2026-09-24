@@ -23,7 +23,6 @@ const BackendSpec kSpecs[] = {
     { WallpaperBackend::Waypaper,  "waypaper",  "waypaper" },
     { WallpaperBackend::Swaybg,    "swaybg",    "swaybg" },
     { WallpaperBackend::Feh,       "feh",       "feh" },
-    { WallpaperBackend::Mlw4,      "ml4w",      "" },
 };
 
 const BackendSpec &specFor(WallpaperBackend b) {
@@ -48,17 +47,11 @@ QString binaryPath(WallpaperBackend b) {
     case WallpaperBackend::Waypaper:  return QStandardPaths::findExecutable("waypaper");
     case WallpaperBackend::Swaybg:    return QStandardPaths::findExecutable("swaybg");
     case WallpaperBackend::Feh:       return QStandardPaths::findExecutable("feh");
-    case WallpaperBackend::Mlw4:      return {};   // user script, checked separately
     }
     return {};
 }
 
-QString ml4wScript() {
-    return QDir::home().filePath(".config/ml4w/scripts/ml4w-wallpaper");
-}
-
 bool backendUsable(WallpaperBackend b) {
-    if (b == WallpaperBackend::Mlw4) return QFileInfo::exists(ml4wScript());
     return !binaryPath(b).isEmpty();
 }
 
@@ -67,12 +60,17 @@ const QSet<QString> kOkTransitions = {
     "center", "outer", "any", "grow", "wipe", "wave"
 };
 
-bool run(const QString &bin, const QStringList &args, QString *error) {
+bool run(const QString &bin, const QStringList &args, QString *error, qint64 *pid = nullptr) {
     if (bin.isEmpty()) { if (error) *error = "backend not found"; return false; }
-    if (!QProcess::startDetached(bin, args)) {
+    qint64 started = 0;
+    // the third parameter is workingDirectory; pid comes fourth
+    const bool ok = pid ? QProcess::startDetached(bin, args, QString(), &started)
+                        : QProcess::startDetached(bin, args);
+    if (!ok) {
         if (error) *error = QStringLiteral("failed to start %1").arg(QFileInfo(bin).fileName());
         return false;
     }
+    if (pid) *pid = started;
     return true;
 }
 
@@ -85,12 +83,35 @@ void killPreviousSwaybg() {
     s_swaybgPid = 0;
 }
 
+// same for mpvpaper, see the video branch for why -f must not be used
+static qint64 s_mpvpaperPid = 0;
+
 QString runAndCapture(const QString &bin, const QStringList &args, int timeoutMs = 2000) {
     QProcess p;
     p.start(bin, args);
     if (!p.waitForStarted(timeoutMs)) return {};
     if (!p.waitForFinished(timeoutMs)) { p.kill(); return {}; }
     return QString::fromUtf8(p.readAllStandardOutput());
+}
+
+// runs after any successful apply, image or video
+ApplyResult finish(const QString &path, const ApplyResult &r,
+                   const QString &stableCopyPath, const QString &postApplyCommand) {    // publish the wallpaper at a fixed path for lockscreens, bars, themes
+    if (!stableCopyPath.trimmed().isEmpty()) {
+        QString target = stableCopyPath.trimmed();
+        if (target.startsWith(QLatin1String("~/")))
+            target.replace(0, 1, QDir::homePath());
+        QDir().mkpath(QFileInfo(target).absolutePath());
+        QFile::remove(target);
+        QFile::copy(path, target);
+    }
+    // optional user hook, for wallust/pywal or reloading bars
+    if (!postApplyCommand.trimmed().isEmpty()) {
+        const QString sh = QStandardPaths::findExecutable("sh");
+        if (!sh.isEmpty())
+            QProcess::startDetached(sh, {"-c", postApplyCommand});
+    }
+    return r;
 }
 
 } // namespace
@@ -197,9 +218,21 @@ ApplyResult applyWallpaper(const QString &path,
             return r;
         }
         r.backend = QStringLiteral("mpvpaper");
-        // -f forks into the background itself, no trailing '&' needed
-        r.ok = run(mpvpaper, {"-f", "-o", "no-audio loop", monitor, path}, &r.error);
-        return r;
+        // No -f. With it mpvpaper forks, so the pid startDetached returns
+        // belongs to a parent that exits at once and the real player is
+        // reparented to init: players then pile up, each software-decoding
+        // 4K AV1 at several hundred percent CPU. Without the fork the pid is
+        // the actual process, so it can be replaced precisely and an mpvpaper
+        // the user started themselves is left alone.
+        if (s_mpvpaperPid > 0) {
+            QProcess::startDetached(QStringLiteral("kill"),
+                                    {QStringLiteral("-TERM"), QString::number(s_mpvpaperPid)});
+            s_mpvpaperPid = 0;
+        }
+        r.ok = run(mpvpaper, {"-o", "no-audio loop", monitor, path}, &r.error,
+                   &s_mpvpaperPid);
+        if (!r.ok) return r;
+        return finish(path, r, stableCopyPath, postApplyCommand);
     }
 
     switch (backend) {
@@ -239,44 +272,21 @@ ApplyResult applyWallpaper(const QString &path,
         const QString bin = binaryPath(backend);
         if (bin.isEmpty()) { r.error = QStringLiteral("swaybg not found"); return r; }
         killPreviousSwaybg();
-        // -i drops to the background on its own, like the reference dispatcher
-        if (!run(bin, {"-i", path, "-m", "fill"}, &r.error)) return r;
-        r.ok = true;
+        // swaybg stays in the foreground by design; startDetached is what
+        // keeps it alive without blocking us, and we need its pid to replace
+        // it on the next change
+        r.ok = run(bin, {"-i", path, "-m", "fill"}, &r.error, &s_swaybgPid);
         break;
     }
     case WallpaperBackend::Feh:
-        // X11 / XWayland only, not truly Wayland-native
+        // X11 / XWayland only, not truly Wayland-native: it sets the X root
+        // window, which a Wayland compositor draws over. It reports success
+        // and changes nothing, so the README calls this out.
         r.ok = run(binaryPath(backend), {"--bg-fill", path}, &r.error);
         break;
-    case WallpaperBackend::Mlw4: {
-        const QString script = ml4wScript();
-        if (!QFileInfo::exists(script)) {
-            r.error = QStringLiteral("ml4w wallpaper script not found");
-            return r;
-        }
-        r.ok = run(script, {path}, &r.error);
-        break;
-    }
     }
 
     if (!r.ok) return r;
 
-    // publish the wallpaper at a fixed path for lockscreens, bars, themes
-    if (!stableCopyPath.trimmed().isEmpty()) {
-        QString target = stableCopyPath.trimmed();
-        if (target.startsWith(QLatin1String("~/")))
-            target.replace(0, 1, QDir::homePath());
-        QDir().mkpath(QFileInfo(target).absolutePath());
-        QFile::remove(target);
-        QFile::copy(path, target);
-    }
-
-    // optional user hook, for wallust/pywal or reloading bars
-    if (!postApplyCommand.trimmed().isEmpty()) {
-        const QString sh = QStandardPaths::findExecutable("sh");
-        if (!sh.isEmpty())
-            QProcess::startDetached(sh, {"-c", postApplyCommand});
-    }
-
-    return r;
+    return finish(path, r, stableCopyPath, postApplyCommand);
 }

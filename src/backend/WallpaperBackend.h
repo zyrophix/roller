@@ -5,15 +5,15 @@
 // Static-image wallpaper backends. `swww` is the former name of `awww`, so
 // both resolve to the same binary.
 enum class WallpaperBackend {
-    Awww, Hyprpaper, Waypaper, Swaybg, Feh, Mlw4
+    Awww, Hyprpaper, Waypaper, Swaybg, Feh
 };
 
 // Backends in the order `auto` tries them.
 QList<WallpaperBackend> availableBackends();
 // Resolve a config value ("auto", "awww", "swww", "hyprpaper", "waypaper",
-// "swaybg", "feh", "ml4w"). An unknown or unavailable name falls back to
-// the first available backend, and `resolved` is set to the canonical name
-// so QML can tell the user what actually got used.
+// "swaybg", "feh"). An unknown or unavailable name falls back to the first
+// available backend, and `resolved` is set to the canonical name so QML can
+// tell the user what actually got used.
 WallpaperBackend resolveBackend(const QString &name, QString *resolved = nullptr);
 QString backendName(WallpaperBackend b);
 

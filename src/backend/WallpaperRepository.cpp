@@ -10,13 +10,18 @@ WallpaperRepository::WallpaperRepository(const QString &d): dir(d) {}
 
 void WallpaperRepository::refresh() {
     wallpapers.clear();
+    QSet<QString> ok = kOkSuffix;
+    for (const auto &e : videoExts) {
+        const QString s = e.trimmed().toLower();
+        if (!s.isEmpty()) ok.insert(s);
+    }
     // match by lowercased suffix instead of glob filters: QDir name filters
     // are case-sensitive, so IMG.JPG never matched. Symlinked files are
     // listed as-is; symlinked dirs are not descended into (no cycle risk).
     QDirIterator it(dir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         it.next();
-        if (kOkSuffix.contains(QFileInfo(it.filePath()).suffix().toLower()))
+        if (ok.contains(QFileInfo(it.filePath()).suffix().toLower()))
             wallpapers << it.filePath();
     }
     std::sort(wallpapers.begin(), wallpapers.end(), [](const QString &a, const QString &b){
