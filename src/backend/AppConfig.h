@@ -21,6 +21,8 @@ class AppConfig : public QObject {
     Q_PROPERTY(QString idleBorderColor READ idleBorderColor NOTIFY changed)
     Q_PROPERTY(int thumbnailHeight READ thumbnailHeight NOTIFY changed)
     Q_PROPERTY(int cacheMaxMb READ cacheMaxMb NOTIFY changed)
+    Q_PROPERTY(bool restoreLast READ restoreLast NOTIFY changed)
+    Q_PROPERTY(QString lastWallpaper READ lastWallpaper NOTIFY changed)
     Q_PROPERTY(QString backend READ backend NOTIFY changed)
     Q_PROPERTY(QString transitionType READ transitionType NOTIFY changed)
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
@@ -55,6 +57,12 @@ public:
     // agree on this number or they request different cache keys.
     int thumbnailHeight() const { return qBound(128, obj.value("thumbnail_height").toInt(512), 2160); }
     int cacheMaxMb() const { return qBound(16, obj.value("cache_max_mb").toInt(256), 8192); }
+    bool restoreLast() const { return obj.value("restore_last").toBool(true); }
+
+    // remembers the applied wallpaper so the picker opens on it again
+    QString lastWallpaper() const;
+    Q_INVOKABLE void saveLastWallpaper(const QString &path);
+    void setStateFile(const QString &p) { stateFile = p; }
     QString backend() const { return obj.value("backend").toString("awww"); }
     QString transitionType() const { return obj.value("transition_type").toString("grow"); }
     QString transitionPos() const { return obj.value("transition_pos").toString("0.5,0.5"); }
@@ -62,6 +70,7 @@ public:
     int transitionFps() const { return obj.value("transition_fps").toInt(60); }
     bool useLayerShell() const { return obj.value("use_layer_shell").toBool(false); }
     QJsonObject obj;
+    QString stateFile;
 signals:
     void changed();
 };

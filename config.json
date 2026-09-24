@@ -22,5 +22,8 @@
     "backend": "awww",
     "use_layer_shell": true,
     "idle_border_width": 2,
-    "idle_border_color": "#585b70"
+    "idle_border_color": "#585b70",
+    "thumbnail_height": 512,
+    "cache_max_mb": 256,
+    "restore_last": true
 }

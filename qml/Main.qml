@@ -29,6 +29,17 @@ ApplicationWindow {
         if (path && backend) backend.applyWallpaper(path)
     }
 
+    // index of the restored wallpaper in the current (filtered) model, or 0
+    function restoreIndex() {
+        if (!config || !config.restoreLast) return 0
+        let want = config.lastWallpaper
+        if (!want) return 0
+        let cnt = wallpaperModel ? wallpaperModel.countProp : 0
+        for (let i = 0; i < cnt; ++i)
+            if (wallpaperModel.get_path_at(i) === want) return i
+        return 0
+    }
+
     function updateSearch(query) {
         if (backend) backend.setSearch(query)
     }
@@ -190,7 +201,7 @@ ApplicationWindow {
         function onWallpapersChanged() {
             let cnt = wallpaperModel ? wallpaperModel.countProp : 0
             if (cnt > 0) {
-                if (win.prevCount === 0) carousel.setSelectedImmediate(0)
+                if (win.prevCount === 0) carousel.setSelectedImmediate(win.restoreIndex())
                 // filter keystrokes: re-center on the current index instead
                 // of yanking selection back to 0 every time
                 else carousel.setSelected(carousel.selectedIndex)
@@ -203,6 +214,7 @@ ApplicationWindow {
         }
         function onWallpaperApplied(path, ok) {
             win.applyError = ok ? "" : "Failed to apply wallpaper — backend missing?"
+            if (ok && config) config.saveLastWallpaper(path)
         }
     }
 

@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
     QDir().mkpath(cacheDir);
 
     AppConfig cfg(cfgObj);
+    cfg.setStateFile(QDir(QFileInfo(cacheDir).absolutePath()).filePath(".current"));
     WallpaperRepository repo(wallpaperDir);
     repo.refresh();
     WallpaperModel sourceModel;
