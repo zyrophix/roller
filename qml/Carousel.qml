@@ -98,6 +98,7 @@ Item {
         contentX = idx * step + tileWidth/2 - width/2
         targetX = contentX
         anim.running = false
+        pendingRecenter = false
         winCenter = -99999
         syncSlots()
     }
@@ -105,16 +106,28 @@ Item {
         root.count = model ? model.count() : 0
         syncSlots()
     }
-    onCountChanged: syncSlots()
+
+    function recenter() {
+        if (count <= 0 || width <= 100) return
+        const idx = isSmallCount
+            ? Math.max(0, Math.min(count - 1, Math.round(visualSelection)))
+            : Math.round(visualSelection)
+        contentX = idx*step + tileWidth/2 - width/2
+        targetX = contentX
+    }
+
+    onCountChanged: {
+        // first wallpapers arrive after the window is already laid out;
+        // center on them instead of leaving the stack at x=0
+        if (count > 0 && visualSelection === 0 && targetX === 0) recenter()
+        syncSlots()
+    }
     onVisibleRangeChanged: syncSlots()
     onWidthChanged: {
-        // keep centered on resize, but never cancel an in-flight step
-        if (anim.running) return
-        let idx = Math.round(visualSelection)
-        if (count>0 && width>100) {
-            contentX = idx*step + tileWidth/2 - width/2
-            targetX = contentX
-        }
+        // never cancel an in-flight step, but remember to re-center once
+        // it settles, otherwise targetX keeps the pre-resize geometry
+        if (anim.running) { pendingRecenter = true; return }
+        recenter()
     }
 
     FrameAnimation {
@@ -138,7 +151,10 @@ Item {
                 contentX -= off*step; targetX -= off*step
             }
             if (!isSmallCount) syncSlots()
-            if (doneX && doneS) running=false
+            if (doneX && doneS) {
+                running = false
+                if (pendingRecenter) { pendingRecenter = false; recenter() }
+            }
         }
     }
     readonly property int selectedIndex: ((Math.round(visualSelection)% (count||1))+(count||1))%(count||1)
@@ -213,6 +229,7 @@ Item {
     // leaves the window is recycled, and that slot is always off-screen.
     property var slotVIdx: []
     property int winCenter: 0
+    property bool pendingRecenter: false
 
     function syncSlots() {
         if (isSmallCount || count <= 0) { slotVIdx = []; winCenter = 0; return }

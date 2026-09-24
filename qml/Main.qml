@@ -104,7 +104,7 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 text: {
                     let cnt = wallpaperModel ? wallpaperModel.countProp : 0
-                    if (cnt > 0) return wallpaperModel.get_name_at(carousel.selectedIndex)
+                    if (cnt > 0) return wallpaperModel.get_name_at(carousel.committedIndex)
                     return ""
                 }
                 color: "#cdd6f4"
@@ -121,7 +121,7 @@ ApplicationWindow {
                 text: {
                     let cnt = wallpaperModel ? wallpaperModel.countProp : 0
                     if (cnt > 0) {
-                        let idx = ((Math.round(carousel.visualSelection) % cnt) + cnt) % cnt
+                        let idx = carousel.committedIndex
                         return (idx + 1) + " / " + cnt
                     }
                     return "No wallpapers — check wallpaper_path in config.json"
