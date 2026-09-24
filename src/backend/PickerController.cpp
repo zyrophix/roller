@@ -9,7 +9,7 @@ void PickerController::refresh(){
     emit libraryRescanned();
 }
 void PickerController::applyFilters(){
-    model->setItems(repo->getAll());
+    if (model && repo) model->setItems(repo->getAll());
     if (proxy) proxy->setSearchQuery(searchQuery);
     emit wallpapersChanged();
 }

@@ -2,8 +2,6 @@
 #include <QDirIterator>
 #include <QSet>
 
-const QStringList WallpaperRepository::kExts = {"*.jpg","*.jpeg","*.png","*.webp","*.bmp"};
-
 namespace {
 const QSet<QString> kOkSuffix = {"jpg","jpeg","png","webp","bmp","gif","avif"};
 }
@@ -22,7 +20,13 @@ void WallpaperRepository::refresh() {
             wallpapers << it.filePath();
     }
     std::sort(wallpapers.begin(), wallpapers.end(), [](const QString &a, const QString &b){
-        return QFileInfo(a).fileName().toLower() < QFileInfo(b).fileName().toLower();
+        // name first so the order stays familiar, full path as tiebreaker:
+        // two wallpapers with the same basename in different subdirs
+        // otherwise compared equal and could swap places between launches
+        const QString an = QFileInfo(a).fileName().toLower();
+        const QString bn = QFileInfo(b).fileName().toLower();
+        if (an != bn) return an < bn;
+        return a.toLower() < b.toLower();
     });
 }
 QStringList WallpaperRepository::getAll() const { return wallpapers; }

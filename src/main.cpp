@@ -53,8 +53,11 @@ int main(int argc, char *argv[]) {
     };
     QString wallpaperDir = expandPath(cfgObj.value("wallpaper_path").toString(QDir::home().filePath("Pictures/Wallpapers")));
     QString cacheDir = expandPath(cfgObj.value("cache_path").toString(QDir::home().filePath(".cache/roller/thumbs")));
-    QDir().mkpath(wallpaperDir);
-    QDir().mkpath(cacheDir);
+    // an empty grid is otherwise indistinguishable from a wrong path
+    if (!QDir().mkpath(wallpaperDir))
+        qWarning() << "roller: cannot create wallpaper_path" << wallpaperDir;
+    if (!QDir().mkpath(cacheDir))
+        qWarning() << "roller: cannot create cache_path" << cacheDir;
 
     AppConfig cfg(cfgObj);
     cfg.setStateFile(QDir(QFileInfo(cacheDir).absolutePath()).filePath(".current"));
@@ -75,6 +78,10 @@ int main(int argc, char *argv[]) {
     });
 
     QQmlApplicationEngine engine;
+    // two index domains are exposed to QML: wallpaperModel is the filtered
+    // proxy, sourceWallpaperModel is the unfiltered list. Calling get_*_at
+    // on the source with a proxy index would show or apply the wrong file
+    // while a filter is active.
     engine.rootContext()->setContextProperty("wallpaperModel", &proxyModel);
     engine.rootContext()->setContextProperty("sourceWallpaperModel", &sourceModel);
     engine.rootContext()->setContextProperty("backend", &backend);
