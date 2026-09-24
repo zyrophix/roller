@@ -52,14 +52,24 @@ Rectangle {
             onTextChanged: { root.pendingQuery = text; debounce.restart() }
             onActiveFocusChanged: if (activeFocus) root.searchMode = true
             Keys.onPressed: (event) => {
+                let ctrl = event.modifiers & Qt.ControlModifier
                 if (event.key === Qt.Key_Escape) {
                     root.clearSearch()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    debounce.stop()
-                    root.pendingQuery = searchField.text
-                    root.searchChanged(searchField.text)
-                    root.searchMode = false
+                    if (event.isAutoRepeat) event.accepted = true
+                    else {
+                        debounce.stop()
+                        root.pendingQuery = searchField.text
+                        root.searchChanged(searchField.text)
+                        root.searchMode = false
+                        event.accepted = true
+                    }
+                } else if (ctrl && event.key === Qt.Key_F) {
+                    // keyHandler is a sibling of the search bar, not an
+                    // ancestor, so this never bubbled up: Ctrl+F could enter
+                    // search but not leave it
+                    root.clearSearch()
                     event.accepted = true
                 }
                 // note: '/' types normally here; the global toggle lives in keyHandler
@@ -87,11 +97,14 @@ Rectangle {
     function setSearchMode(on) { root.searchMode = on }
     function isSearchMode() { return root.searchMode }
     function clearSearch() {
+        // leave the mode before notifying: the reverse order let the
+        // wallpapersChanged handler see searchMode still true, and two
+        // competing handlers then raced for focus
+        root.searchMode = false
         searchField.text = ""
         debounce.stop()
         root.pendingQuery = ""
         root.searchChanged("")
-        root.searchMode = false
     }
 
     onSearchModeChanged: {

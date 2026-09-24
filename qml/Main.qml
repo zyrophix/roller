@@ -160,6 +160,21 @@ ApplicationWindow {
             let key = event.text.toLowerCase()
             let k = event.key
             let ctrl = event.modifiers & Qt.ControlModifier
+            // held Enter/Space used to re-run applyWallpaper on every repeat
+            if (event.isAutoRepeat
+                    && (k === Qt.Key_Return || k === Qt.Key_Enter || key === " "
+                        || k === Qt.Key_Escape || k === Qt.Key_Slash)) {
+                event.accepted = true
+                return
+            }
+            // navigation may repeat, but never run further ahead than the
+            // animation can catch up, or the carousel never settles
+            function nav(fn) {
+                if (!event.isAutoRepeat
+                        || Math.abs(carousel.targetSelection - carousel.visualSelection) < 3)
+                    fn()
+                event.accepted = true
+            }
             if (k === Qt.Key_Escape && searchBar.searchMode) {
                 searchBar.clearSearch()
                 keyHandler.forceActiveFocus()
@@ -173,10 +188,10 @@ ApplicationWindow {
                 event.accepted = true
                 return
             }
-            if (key === "l" || k === Qt.Key_Right) { carousel.next(); event.accepted = true }
-            else if (key === "h" || k === Qt.Key_Left) { carousel.prev(); event.accepted = true }
-            else if (key === "d") { carousel.jumpForward(); event.accepted = true }
-            else if (key === "u") { carousel.jumpBack(); event.accepted = true }
+            if (key === "l" || k === Qt.Key_Right) nav(carousel.next)
+            else if (key === "h" || k === Qt.Key_Left) nav(carousel.prev)
+            else if (key === "d") nav(carousel.jumpForward)
+            else if (key === "u") nav(carousel.jumpBack)
             else if (k === Qt.Key_Return || k === Qt.Key_Enter || key === " ") {
                 if (searchBar.searchMode) {
                     searchBar.searchMode = false

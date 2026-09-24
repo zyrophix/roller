@@ -71,11 +71,17 @@ Item {
     }
     function jumpForward() {
         if (isSmallCount) { setSelected(Math.min(count - 1, Math.round(targetSelection) + countVisible)); return }
-        let c=countVisible; let t=Math.round(targetSelection)+c; setSelected(((t%count)+count)%count)
+        // move in the direction asked for; routing through setSelected applies
+        // shortest-path, which breaks the tie backwards on even counts
+        targetSelection += countVisible
+        ensureVisible(targetSelection)
+        startAnim()
     }
     function jumpBack() {
         if (isSmallCount) { setSelected(Math.max(0, Math.round(targetSelection) - countVisible)); return }
-        let c=countVisible; let t=Math.round(targetSelection)-c; setSelected(((t%count)+count)%count)
+        targetSelection -= countVisible
+        ensureVisible(targetSelection)
+        startAnim()
     }
 
     function ensureVisible(idx) {
