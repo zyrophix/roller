@@ -22,7 +22,7 @@ qt_add_executable(roller
     src/backend/WallpaperModel.cpp
     src/backend/WallpaperFilterProxy.cpp
     src/backend/ThumbnailCache.cpp
-    src/backend/Awww.cpp
+    src/backend/WallpaperBackend.cpp
     src/backend/PickerController.cpp
     src/backend/AppConfig.cpp
 )

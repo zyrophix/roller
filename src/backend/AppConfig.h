@@ -1,6 +1,8 @@
 #pragma once
 #include <QObject>
 #include <QJsonObject>
+#include <QJsonArray>
+#include <QStringList>
 #include <cmath>
 
 class AppConfig : public QObject {
@@ -23,6 +25,7 @@ class AppConfig : public QObject {
     Q_PROPERTY(int cacheMaxMb READ cacheMaxMb NOTIFY changed)
     Q_PROPERTY(bool restoreLast READ restoreLast NOTIFY changed)
     Q_PROPERTY(QString lastWallpaper READ lastWallpaper NOTIFY changed)
+    Q_PROPERTY(QString backendName READ backendName NOTIFY changed)
     Q_PROPERTY(QString backend READ backend NOTIFY changed)
     Q_PROPERTY(QString transitionType READ transitionType NOTIFY changed)
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
@@ -63,7 +66,18 @@ public:
     QString lastWallpaper() const;
     Q_INVOKABLE void saveLastWallpaper(const QString &path);
     void setStateFile(const QString &p) { stateFile = p; }
-    QString backend() const { return obj.value("backend").toString("awww"); }
+    QString backend() const { return obj.value("backend").toString("auto"); }
+    QStringList videoExtensions() const {
+        const auto a = obj.value("video_extensions").toArray();
+        if (a.isEmpty()) return {};
+        QStringList out;
+        for (const auto &v : a) out << v.toString();
+        return out;
+    }
+    QString stableCopyPath() const { return obj.value("stable_copy_path").toString(); }
+    QString postApplyCommand() const { return obj.value("post_apply_command").toString(); }
+    // canonical name of the backend that will actually be used
+    QString backendName() const;
     QString transitionType() const { return obj.value("transition_type").toString("grow"); }
     QString transitionPos() const { return obj.value("transition_pos").toString("0.5,0.5"); }
     double transitionDuration() const { return obj.value("transition_duration").toDouble(1.2); }

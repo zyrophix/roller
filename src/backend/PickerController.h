@@ -14,7 +14,7 @@ public:
     void refresh();
 signals:
     void wallpapersChanged();
-    void wallpaperApplied(const QString &path, bool ok);
+    void wallpaperApplied(const QString &path, bool ok, const QString &error);
     // fires only when the library itself was rescanned, not on search input
     void libraryRescanned();
 private:

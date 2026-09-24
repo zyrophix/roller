@@ -227,8 +227,8 @@ ApplicationWindow {
             }
             // when in searchMode, keep focus on searchField (handled by SearchBar)
         }
-        function onWallpaperApplied(path, ok) {
-            win.applyError = ok ? "" : "Failed to apply wallpaper — backend missing?"
+        function onWallpaperApplied(path, ok, error) {
+            win.applyError = ok ? "" : ("Failed: " + (error || "backend unavailable"))
             if (ok && config) config.saveLastWallpaper(path)
         }
     }

@@ -1,5 +1,5 @@
 #include "PickerController.h"
-#include "Awww.h"
+#include "WallpaperBackend.h"
 
 PickerController::PickerController(WallpaperRepository *r, WallpaperModel *m, WallpaperFilterProxy *px, AppConfig *c, QObject *p): QObject(p), repo(r), model(m), proxy(px), cfg(c) {}
 
@@ -21,9 +21,16 @@ void PickerController::setSearch(const QString &q){
     emit wallpapersChanged();
 }
 void PickerController::applyWallpaper(const QString &path){
-    bool ok = model && cfg
-        ? ::applyWallpaper(path, cfg->transitionType(), cfg->transitionPos(),
-                           cfg->transitionDuration(), cfg->transitionFps())
-        : false;
-    emit wallpaperApplied(path, ok);
+    ApplyResult r;
+    if (model && cfg) {
+        r = ::applyWallpaper(path,
+                              ::resolveBackend(cfg->backend()),
+                              cfg->transitionType(), cfg->transitionPos(),
+                              cfg->transitionDuration(), cfg->transitionFps(),
+                              cfg->videoExtensions(), cfg->stableCopyPath(),
+                              cfg->postApplyCommand());
+    } else {
+        r.error = QStringLiteral("backend not initialised");
+    }
+    emit wallpaperApplied(path, r.ok, r.error);
 }

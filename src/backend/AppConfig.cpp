@@ -1,4 +1,5 @@
 #include "AppConfig.h"
+#include "WallpaperBackend.h"
 #include <QFile>
 #include <QDir>
 #include <QFileInfo>
@@ -15,8 +16,7 @@ QString AppConfig::lastWallpaper() const {
     return (!p.isEmpty() && QFileInfo::exists(p)) ? p : QString{};
 }
 
-void AppConfig::saveLastWallpaper(const QString &path) {
-    if (stateFile.isEmpty() || path.isEmpty()) return;
+void AppConfig::saveLastWallpaper(const QString &path) {    if (stateFile.isEmpty() || path.isEmpty()) return;
     QDir().mkpath(QFileInfo(stateFile).absolutePath());
     // QSaveFile: a torn write here would point the next launch at nothing
     QSaveFile f(stateFile);
@@ -24,4 +24,8 @@ void AppConfig::saveLastWallpaper(const QString &path) {
     f.write(path.toUtf8());
     if (!f.commit()) return;
     emit changed();
+}
+
+QString AppConfig::backendName() const {
+    return ::backendName(::resolveBackend(backend()));
 }
