@@ -7,7 +7,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDir>
+#include <QLockFile>
 #include <QStandardPaths>
+#include <cstdio>
 #ifdef HAS_LAYER_SHELL
 #include <LayerShellQt/Shell>
 #include <LayerShellQt/Window>
@@ -19,6 +21,37 @@
 #include "backend/ThumbnailCache.h"
 #include "backend/PickerController.h"
 
+#ifndef ROLLER_VERSION
+#define ROLLER_VERSION "unknown"
+#endif
+
+// CLI output goes through printf rather than qInfo: qWarning/qInfo from this
+// binary vanish when stderr is not a tty in this environment, and --help or
+// a rejected second instance must never be silent.
+static void printUsage() {
+    std::fputs(
+        "roller " ROLLER_VERSION " - keyboard-driven wallpaper picker (Wayland)\n"
+        "\n"
+        "Usage: roller [options]\n"
+        "\n"
+        "Options:\n"
+        "  -h, --help           show this help and exit\n"
+        "  -v, --version        print the version and exit\n"
+        "      --allow-multiple do not enforce the single-instance lock\n"
+        "\n"
+        "Config is read from ../config.json next to the binary, then ./config.json,\n"
+        "then ~/.config/roller/config.json.\n"
+        "\n"
+        "Backends (\"backend\" in config.json): auto, awww, swww, hyprpaper,\n"
+        "waypaper, swaybg, feh. Video files always go through mpvpaper.\n"
+        "\n"
+        "Keys: h/l or Left/Right step, d/u jump a page, / or Ctrl+F search,\n"
+        "Enter apply, Esc close, wheel and drag to scroll, click to select or apply.\n"
+        "\n"
+        "LayerShell is required: roller is Wayland-only and will not start on X11.\n",
+        stdout);
+}
+
 static QJsonObject loadConfig(const QString &path) {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly)) return {};
@@ -27,13 +60,61 @@ static QJsonObject loadConfig(const QString &path) {
 }
 
 int main(int argc, char *argv[]) {
+    bool allowMultiple = false;
+    for (int i = 1; i < argc; ++i) {
+        const QString a = QString::fromLocal8Bit(argv[i]);
+        if (a == u8"-h" || a == u8"--help") { printUsage(); return 0; }
+        if (a == u8"-v" || a == u8"--version") {
+            std::printf("roller %s\n", ROLLER_VERSION);
+            return 0;
+        }
+        if (a == u8"--allow-multiple") { allowMultiple = true; continue; }
+        std::fprintf(stderr, "roller: unknown option %s - try --help\n",
+                     qPrintable(a));
+        return 1;
+    }
+
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setAlphaBufferSize(8);
     QSurfaceFormat::setDefaultFormat(fmt);
     QGuiApplication app(argc, argv);
     app.setApplicationName("roller");
     app.setDesktopFileName("roller");
-    // LayerShell is handled in QML via org.kde.layershell when use_layer_shell is true
+
+    // Single instance. Two rollers would each hold a layer surface with
+    // exclusive keyboard, each start a thumbnail worker writing the same
+    // cache files, and each write the current-wallpaper state file. The lock
+    // is taken before the QML engine and before generateMissing, so a
+    // rejected instance never touches the cache.
+    //
+    // QLockFile rather than QLocalServer: a local socket file survives a
+    // crash and then blocks the next start, and the usual "delete it and
+    // claim it" recovery lets a second instance steal the channel from a
+    // live one. QLockFile decides from pid plus process name, so an instance
+    // that was killed is detected and its lock reclaimed.
+    QLockFile lock(QDir(QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation))
+                       .filePath("roller.lock"));
+    if (!allowMultiple) {
+        // Qt requires setStaleLockTime(0) for a resource held a long time:
+        // the 30 second default would declare our own live lock stale.
+        lock.setStaleLockTime(0);
+        if (!lock.tryLock(0)) {
+            if (lock.error() == QLockFile::LockFailedError) {
+                qint64 pid = 0;
+                QString host, appname;
+                lock.getLockInfo(&pid, &host, &appname);
+                std::fprintf(stderr,
+                             "roller is already running (pid %lld), not starting again\n",
+                             static_cast<long long>(pid));
+                return 0;
+            }
+            std::fprintf(stderr, "roller: cannot acquire the single-instance lock (error %d)\n",
+                         static_cast<int>(lock.error()));
+            return 1;
+        }
+    }
+
+    // LayerShell is handled in QML via org.kde.layershell
     QString appDir = QCoreApplication::applicationDirPath();
     QString configPath = QDir::cleanPath(QDir(appDir).filePath("../config.json"));
     if (!QFile::exists(configPath)) configPath = QDir::current().filePath("config.json");

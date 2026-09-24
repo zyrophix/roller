@@ -37,6 +37,7 @@ qt_add_qml_module(roller
 )
 
 target_compile_options(roller PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_definitions(roller PRIVATE ROLLER_VERSION="${PROJECT_VERSION}")
 target_link_libraries(roller PRIVATE Qt6::Quick Qt6::Gui Qt6::Core Qt6::Concurrent)
 if(LayerShellQt_FOUND)
     target_link_libraries(roller PRIVATE LayerShellQt::Interface)
