@@ -6,6 +6,7 @@ PickerController::PickerController(WallpaperRepository *r, WallpaperModel *m, Wa
 void PickerController::refresh(){
     if (repo) repo->refresh();
     applyFilters();
+    emit libraryRescanned();
 }
 void PickerController::applyFilters(){
     model->setItems(repo->getAll());

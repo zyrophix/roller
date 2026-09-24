@@ -67,6 +67,10 @@ int main(int argc, char *argv[]) {
     thumbCache.setTargetHeight(qRound(cfg.panelHeight() * cfg.verticalScale()));
     QObject::connect(&thumbCache, &ThumbnailCache::thumbReady, &sourceModel, &WallpaperModel::onThumbReady);
     PickerController backend(&repo, &sourceModel, &proxyModel, &cfg);
+    // new or removed wallpapers need their thumbs too, not only at startup
+    QObject::connect(&backend, &PickerController::libraryRescanned, &backend, [&]{
+        thumbCache.generateMissing(repo.getAll());
+    });
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("wallpaperModel", &proxyModel);
@@ -89,6 +93,5 @@ int main(int argc, char *argv[]) {
     }
     if (engine.rootObjects().isEmpty()) return 1;
     backend.refresh();
-    thumbCache.generateMissing(repo.getAll());
     return app.exec();
 }

@@ -1,6 +1,8 @@
 #include "ThumbnailCache.h"
+#include "WallpaperModel.h"
 #include <QFileInfo>
 #include <QDir>
+#include <QSet>
 #include <QCryptographicHash>
 #include <QFile>
 #include <QImageReader>
@@ -32,18 +34,20 @@ static void emitThumbReady(QPointer<ThumbnailCache> guard, const QString &p, con
 }
 
 void ThumbnailCache::generateMissing(const QStringList &paths) {
+    // a previous pass may still be writing the same files
+    mFuture.cancel();
+    mFuture.waitForFinished();
     // snapshot into locals: the worker must not touch members off-thread
     const QString dir = cacheDir;
     const int targetH = qMax(1, thumbHeight);
     QPointer<ThumbnailCache> guard(this);
     mFuture = QtConcurrent::run([guard, dir, targetH, paths](QPromise<void> &promise){
         QDir().mkpath(dir);
+        QSet<QString> live;
         for (auto &p : paths) {
             if (promise.isCanceled()) return;
-            QString hash = QString::fromUtf8(QCryptographicHash::hash(p.toUtf8(), QCryptographicHash::Md5).toHex());
-            QString ext = QFileInfo(p).suffix().toLower();
-            if (ext.isEmpty()) ext = "jpg";
-            QString thumb = QDir(dir).filePath(hash + "." + ext);
+            const QString thumb = QDir(dir).filePath(thumbFileName(p));
+            live.insert(QFileInfo(thumb).fileName());
             // skip only if the cached thumb is tall enough; older revisions
             // stored 500px-wide thumbs that upscale ~2x on a selected tile
             if (QFileInfo::exists(thumb) && thumbPixelHeight(thumb) >= targetH) continue;
@@ -88,6 +92,14 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
                 continue;
             }
             emitThumbReady(guard, p, thumb);
+        }
+        // drop thumbs whose wallpaper is gone. legacy basename-keyed files
+        // are left alone: the migration above still consumes them.
+        for (const auto &name : QDir(dir).entryList(QDir::Files, QDir::Name)) {
+            if (promise.isCanceled()) return;
+            if (live.contains(name)) continue;
+            if (QFileInfo(name).completeBaseName().size() != 32) continue;
+            QFile::remove(QDir(dir).filePath(name));
         }
     });
 }

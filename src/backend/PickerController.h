@@ -15,6 +15,8 @@ public:
 signals:
     void wallpapersChanged();
     void wallpaperApplied(const QString &path, bool ok);
+    // fires only when the library itself was rescanned, not on search input
+    void libraryRescanned();
 private:
     void applyFilters();
     WallpaperRepository *repo;

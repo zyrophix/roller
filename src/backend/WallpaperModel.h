@@ -1,6 +1,10 @@
 #pragma once
 #include <QAbstractListModel>
+#include <QHash>
 #include <QStringList>
+
+// shared by WallpaperModel and ThumbnailCache so the two cannot disagree
+QString thumbFileName(const QString &sourcePath);
 
 class WallpaperModel : public QAbstractListModel {
     Q_OBJECT
@@ -27,5 +31,6 @@ signals:
 private:
     struct Item { QString path, name, thumb; };
     QVector<Item> m_items;
+    QHash<QString, int> m_rowByPath;
     QString wallpaperDir, cacheDir;
 };
