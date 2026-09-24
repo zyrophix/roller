@@ -98,10 +98,15 @@ Item {
         contentX = idx * step + tileWidth/2 - width/2
         targetX = contentX
         anim.running = false
+        winCenter = -99999
+        syncSlots()
     }
     Component.onCompleted: {
         root.count = model ? model.count() : 0
+        syncSlots()
     }
+    onCountChanged: syncSlots()
+    onVisibleRangeChanged: syncSlots()
     onWidthChanged: {
         // keep centered on resize, but never cancel an in-flight step
         if (anim.running) return
@@ -132,6 +137,7 @@ Item {
                 visualSelection -= off; targetSelection -= off
                 contentX -= off*step; targetX -= off*step
             }
+            if (!isSmallCount) syncSlots()
             if (doneX && doneS) running=false
         }
     }
@@ -198,12 +204,35 @@ Item {
 
     property int visibleRange: Math.floor(countVisible/2)+2
     property bool isSmallCount: root.count > 0 && root.count <= root.visibleRange*2+1
+
+    // Delegate slots are pinned to absolute vIdx values instead of being
+    // derived from the rounded center. Deriving them (center-range+index)
+    // shifted every slot on each half-step, so every pooled Image changed
+    // source in the same frame and retainWhileLoading painted the previous
+    // row's wallpaper in the middle of the slide. Here only the slot that
+    // leaves the window is recycled, and that slot is always off-screen.
+    property var slotVIdx: []
+    property int winCenter: 0
+
+    function syncSlots() {
+        if (isSmallCount || count <= 0) { slotVIdx = []; winCenter = 0; return }
+        const c = Math.round(visualSelection)
+        if (c === winCenter && slotVIdx.length === visibleRange * 2 + 1) return
+        const need = []
+        for (let i = -visibleRange; i <= visibleRange; ++i) need.push(c + i)
+        const kept = slotVIdx.filter(v => need.indexOf(v) >= 0)
+        for (let i = 0; i < need.length; ++i)
+            if (kept.indexOf(need[i]) < 0) kept.push(need[i])
+        winCenter = c
+        slotVIdx = kept.slice(0, visibleRange * 2 + 1)
+    }
+
     Repeater {
         model: root.count>0 ? (root.isSmallCount ? root.count : root.visibleRange*2+1) : 0
         delegate: Item {
             required property int index
-            property int center: Math.round(root.visualSelection)
-            property int vIdx: root.isSmallCount ? index : center - root.visibleRange + index
+            property int vIdx: root.isSmallCount ? index
+                                 : (root.slotVIdx[index] !== undefined ? root.slotVIdx[index] : index)
             property int realIdx: root.isSmallCount ? index : ((vIdx % root.count)+root.count)%root.count
             // these come from model; root.model.rev subscribes the binding
             // so dataChanged (new thumbs, refilter) re-evaluates it
@@ -260,7 +289,9 @@ Item {
                     height: scaledH
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
-                    retainWhileLoading: true
+                    // a recycled tile must go blank rather than keep painting
+                    // the wallpaper it used to show
+                    retainWhileLoading: false
                     cache: true
                     // fixed cap: scale-dependent sourceSize would re-decode every frame
                     sourceSize.height: Math.round(root.panelHeight * root.verticalScale)
@@ -305,27 +336,6 @@ Item {
                     root.wallpaperClicked(realIdx)
                 }
             }
-        }
-    }
-
-    // Decode preloader: warms QML's pixmap cache for every wallpaper, so a
-    // window rebind mid-slide swaps to an already-decoded image in the same
-    // frame instead of showing stale tiles for 1-3 frames. Invisible items
-    // still decode; they never paint.
-    Repeater {
-        model: root.count
-        delegate: Image {
-            required property int index
-            source: {
-                if (!root.model) return ""
-                root.model.rev
-                return root.model.get_thumb_at(index)
-            }
-            visible: false
-            asynchronous: true
-            cache: true
-            // same decode key as the visible tiles, or the cache misses
-            sourceSize.height: Math.round(root.panelHeight * root.verticalScale)
         }
     }
 }
