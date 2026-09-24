@@ -64,7 +64,8 @@ int main(int argc, char *argv[]) {
     WallpaperFilterProxy proxyModel;
     proxyModel.setSource(&sourceModel);
     ThumbnailCache thumbCache(cacheDir);
-    thumbCache.setTargetHeight(qRound(cfg.panelHeight() * cfg.verticalScale()));
+    thumbCache.setTargetHeight(cfg.thumbnailHeight());
+    thumbCache.setMaxBytes(qint64(cfg.cacheMaxMb()) * 1024 * 1024);
     QObject::connect(&thumbCache, &ThumbnailCache::thumbReady, &sourceModel, &WallpaperModel::onThumbReady);
     PickerController backend(&repo, &sourceModel, &proxyModel, &cfg);
     // new or removed wallpapers need their thumbs too, not only at startup

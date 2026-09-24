@@ -19,6 +19,8 @@ class AppConfig : public QObject {
     Q_PROPERTY(QString carouselSelectedBorder READ carouselSelectedBorder NOTIFY changed)
     Q_PROPERTY(int idleBorderWidth READ idleBorderWidth NOTIFY changed)
     Q_PROPERTY(QString idleBorderColor READ idleBorderColor NOTIFY changed)
+    Q_PROPERTY(int thumbnailHeight READ thumbnailHeight NOTIFY changed)
+    Q_PROPERTY(int cacheMaxMb READ cacheMaxMb NOTIFY changed)
     Q_PROPERTY(QString backend READ backend NOTIFY changed)
     Q_PROPERTY(QString transitionType READ transitionType NOTIFY changed)
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
@@ -47,6 +49,12 @@ public:
     QString carouselSelectedBorder() const { return obj.value("carousel_selected_border").toString("#b4befe"); }
     int idleBorderWidth() const { return obj.value("idle_border_width").toInt(2); }
     QString idleBorderColor() const { return obj.value("idle_border_color").toString("#585b70"); }
+    // 512 is the freedesktop thumbnail tier and, at 16:9, keeps one decoded
+    // ARGB32 thumb (910x512) under Qt's 2 MiB unreferenced pixmap cache
+    // limit; 550 does not fit. Both the generator and the QML tiles must
+    // agree on this number or they request different cache keys.
+    int thumbnailHeight() const { return qBound(128, obj.value("thumbnail_height").toInt(512), 2160); }
+    int cacheMaxMb() const { return qBound(16, obj.value("cache_max_mb").toInt(256), 8192); }
     QString backend() const { return obj.value("backend").toString("awww"); }
     QString transitionType() const { return obj.value("transition_type").toString("grow"); }
     QString transitionPos() const { return obj.value("transition_pos").toString("0.5,0.5"); }

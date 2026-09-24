@@ -14,6 +14,9 @@ Item {
     property real spacing: 4.0
     property real horizontalScale: 1.6
     property real verticalScale: 1.1
+    // must match ThumbnailCache::setTargetHeight, or the tiles request a
+    // different pixmap cache key than the generator warmed
+    property int thumbnailHeight: 512
 
     signal wallpaperClicked(int idx)
     signal applyRequested(int idx)
@@ -311,7 +314,7 @@ Item {
                     retainWhileLoading: false
                     cache: true
                     // fixed cap: scale-dependent sourceSize would re-decode every frame
-                    sourceSize.height: Math.round(root.panelHeight * root.verticalScale)
+                    sourceSize.height: root.thumbnailHeight
                     transform: Matrix4x4 {
                         matrix: Qt.matrix4x4(1, root.shear, 0, -shearOff,
                                              0, 1, 0, 0,

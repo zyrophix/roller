@@ -40,17 +40,21 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
     // snapshot into locals: the worker must not touch members off-thread
     const QString dir = cacheDir;
     const int targetH = qMax(1, thumbHeight);
+    const qint64 maxBytes = this->maxBytes;
     QPointer<ThumbnailCache> guard(this);
-    mFuture = QtConcurrent::run([guard, dir, targetH, paths](QPromise<void> &promise){
+    mFuture = QtConcurrent::run([guard, dir, targetH, maxBytes, paths](QPromise<void> &promise){
         QDir().mkpath(dir);
         QSet<QString> live;
         for (auto &p : paths) {
             if (promise.isCanceled()) return;
             const QString thumb = QDir(dir).filePath(thumbFileName(p));
             live.insert(QFileInfo(thumb).fileName());
-            // skip only if the cached thumb is tall enough; older revisions
-            // stored 500px-wide thumbs that upscale ~2x on a selected tile
-            if (QFileInfo::exists(thumb) && thumbPixelHeight(thumb) >= targetH) continue;
+            // "good enough" means close to the target, not merely larger:
+            // a stale 550px thumb is still over the 2 MiB per-entry pixmap
+            // cache limit once the target drops to 512.
+            const int cachedH = QFileInfo::exists(thumb) ? thumbPixelHeight(thumb) : -1;
+            const bool ok = cachedH >= targetH && cachedH <= targetH + targetH / 16;
+            if (ok) continue;
             // migrate legacy basename-keyed thumbs produced by older versions.
             // the aspect check guards against two sources sharing a basename
             // in different subdirs: a foreign legacy thumb never matches.
@@ -93,13 +97,32 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
             }
             emitThumbReady(guard, p, thumb);
         }
-        // drop thumbs whose wallpaper is gone. legacy basename-keyed files
-        // are left alone: the migration above still consumes them.
-        for (const auto &name : QDir(dir).entryList(QDir::Files, QDir::Name)) {
-            if (promise.isCanceled()) return;
-            if (live.contains(name)) continue;
+        // drop thumbs whose wallpaper is gone, then enforce the size bound
+        // oldest-first. legacy basename-keyed files are left alone: the
+        // migration above still consumes them.
+        QDir d(dir);
+        struct Entry { QString name; qint64 bytes; QDateTime mtime; };
+        QVector<Entry> entries;
+        qint64 total = 0;
+        for (const auto &name : d.entryList(QDir::Files, QDir::Name)) {
             if (QFileInfo(name).completeBaseName().size() != 32) continue;
-            QFile::remove(QDir(dir).filePath(name));
+            const QFileInfo fi(d.filePath(name));
+            entries.append({name, fi.size(), fi.lastModified()});
+            total += fi.size();
+        }
+        std::sort(entries.begin(), entries.end(), [](const Entry &a, const Entry &b) {
+            return a.mtime < b.mtime;
+        });
+        for (const auto &e : entries) {
+            if (promise.isCanceled()) return;
+            if (live.contains(e.name)) continue;
+            if (QFile::remove(d.filePath(e.name))) total -= e.bytes;
+        }
+        for (const auto &e : entries) {
+            if (promise.isCanceled()) return;
+            if (total <= maxBytes) break;
+            if (!live.contains(e.name)) continue;   // regenerate instead of thrash
+            if (QFile::remove(d.filePath(e.name))) total -= e.bytes;
         }
     });
 }

@@ -90,6 +90,7 @@ ApplicationWindow {
                 panelHeight: config ? config.panelHeight : 500
                 horizontalScale: config ? config.horizontalScale : 1.6
                 verticalScale: config ? config.verticalScale : 1.1
+                thumbnailHeight: config ? config.thumbnailHeight : 512
                 countVisible: config ? config.numberOfPictures || 5 : 5
                 onWallpaperClicked: (idx) => { /* selection already set by the delegate */ }
                 onApplyRequested: (idx) => {
