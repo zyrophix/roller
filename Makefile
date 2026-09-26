@@ -7,9 +7,6 @@ all:
 run: all
 	$(BUILD)/roller
 
-cache:
-	$(APP_DIR)/scripts/cache.sh $(APP_DIR)
-
 install: all
 	strip --strip-all $(BUILD)/roller 2>/dev/null || true
 	mkdir -p $(HOME)/.local/bin
@@ -17,6 +14,7 @@ install: all
 
 lint:
 	qmllint $(APP_DIR)/qml/*.qml
+	qmllint $(APP_DIR)/qml/*.qml --bare 2>&1 | grep -c Warning || true
 
 clean:
 	rm -rf $(BUILD)
