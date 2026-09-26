@@ -16,6 +16,20 @@
 
 ThumbnailCache::ThumbnailCache(const QString &dir, QObject *p): QObject(p), cacheDir(dir) {}
 
+QSize thumbnailSize(const QSize &source, int targetHeight) {
+    if (!source.isValid() || source.width() <= 0 || source.height() <= 0)
+        return {};
+    int h = qMax(1, targetHeight);
+    int w = h * source.width() / source.height();
+    if (source.height() < h) {           // never upscale a small source
+        w = source.width();
+        h = source.height();
+    }
+    w = qBound(1, w, qMin(4096, 4 * h));  // clamp absurd claimed aspects
+    h = qMin(h, 4096);
+    return QSize(w, h);
+}
+
 ThumbnailCache::~ThumbnailCache() {
     mFuture.cancel();
     mFuture.waitForFinished();
@@ -106,22 +120,15 @@ void ThumbnailCache::generateMissing(const QStringList &paths) {
                 src = img.size();
             }
             if (!src.isValid() || src.width() <= 0 || src.height() <= 0) continue;
-            // height-driven sizing, like `-thumbnail xH`: width follows aspect
-            int h = targetH;
-            int w = h * src.width() / src.height();
-            if (src.height() < h) {
-                w = src.width();
-                h = src.height();
-            }
-            // clamp against corrupt headers claiming absurd aspects
-            w = qBound(1, w, qMin(4096, 4 * h));
-            h = qMin(h, 4096);
+            const QSize want = thumbnailSize(src, targetH);
+            if (!want.isValid() || want.isEmpty()) continue;
+            const int w = want.width(), h = want.height();
             if (img.isNull()) {
-                r.setScaledSize(QSize(w, h));
+                r.setScaledSize(want);
                 img = r.read();
                 if (img.isNull()) continue;
             } else if (img.height() != h) {
-                img = img.scaled(w, h, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+                img = img.scaled(want, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
             }
             if (!img.save(thumb, nullptr, 85)) {
                 QFile::remove(thumb);

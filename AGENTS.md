@@ -7,10 +7,14 @@ reliably inferred from the code.
 
 ```sh
 cmake -B build -S . && cmake --build build    # ~40s, the fast check
+ctest --test-dir build --output-on-failure    # regression tests
 make lint                                      # qmllint, informational
 ```
 
-There is no test suite yet. `make lint` is not wired into CI as a hard gate.
+The tests cover pure logic in `src/backend` only: thumbnail sizing, cache
+keys, video detection, backend fallback, config bounds. Rendering and
+animation are not covered and must be checked by hand — see the manual
+checks in `CONTRIBUTING.md`.
 
 Run the built binary from the tree — `./build/roller`. It reads
 `$XDG_CONFIG_HOME/roller/config.json` first, then `../config.json` next to the

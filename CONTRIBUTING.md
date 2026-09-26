@@ -14,13 +14,16 @@ cmake -B build -S . && cmake --build build
 ## Before you submit
 
 ```sh
-cmake -B build -S . && cmake --build build   # must build without new warnings
+cmake -B build -S . && cmake --build build    # must build without new warnings
+ctest --test-dir build --output-on-failure    # regression tests
 make lint                                     # qmllint, informational
 ```
 
-There is no test suite yet. Changes to rendering, animation or the delegate
-pool cannot be verified automatically, so describe in the PR what you saw on
-screen, not only what compiled.
+The tests cover the pure logic that has broken before: thumbnail sizing and
+the pixmap cache budget, cache keys, video detection, backend fallback, and
+the config bounds. Rendering and animation are **not** covered — the overlay
+cannot be driven by synthetic input, and a layer surface needs a compositor.
+Ask a human for those.
 
 ## Manual checks that matter
 

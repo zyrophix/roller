@@ -178,8 +178,9 @@ Two decisions are not guessable from the code alone:
 - `qml/` — `Main.qml` overlay, layout and keybinds; `Carousel.qml` coverflow and delegate pool; `SearchBar.qml` debounced field
 - `src/` — `main.cpp` CLI, single-instance lock, config resolution, QML engine
 - `src/backend/` — repository scan, model, filter proxy, thumbnail worker, backend dispatch
+- `tests/` — `QtTest` regression tests over the pure logic; run with `ctest --test-dir build`
 - `config.example.json` — config template
-- `.github/workflows/ci.yml` — build and test
+- `.github/workflows/ci.yml` — build, QML lint, tests
 
 ## Contributing
 

@@ -20,8 +20,8 @@ and a pluggable wallpaper backend.
 
 Known limitations at this release:
 
-- No automated tests. Rendering, animation and delegate recycling are
-  verified by hand only.
+- Rendering, animation and delegate recycling have no automated
+  coverage and are verified by hand only.
 - `awww` is the only backend exercised on a real desktop. `hyprpaper`,
   `waypaper` and `swaybg` are implemented from their documented interfaces.
 - The video path is implemented but lightly exercised. Decoding cost depends

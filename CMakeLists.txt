@@ -47,3 +47,28 @@ endif()
 install(TARGETS roller
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# --- tests ---
+# Pure logic only. Rendering and animation stay hand-verified: the overlay
+# cannot be reached by synthetic input and a layer surface needs a compositor.
+option(BUILD_TESTING "Build the regression tests" ON)
+if(BUILD_TESTING)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
+    enable_testing()
+
+    add_executable(roller_tests
+        tests/test_backend.cpp
+        src/backend/AppConfig.cpp
+        src/backend/ThumbnailCache.cpp
+        src/backend/WallpaperModel.cpp
+        src/backend/WallpaperFilterProxy.cpp
+        src/backend/WallpaperRepository.cpp
+        src/backend/WallpaperBackend.cpp
+    )
+    set_target_properties(roller_tests PROPERTIES AUTOMOC ON)
+    target_compile_definitions(roller_tests PRIVATE HAS_LAYER_SHELL=0)
+    target_link_libraries(roller_tests PRIVATE Qt6::Test Qt6::Core Qt6::Gui Qt6::Quick Qt6::Concurrent)
+    target_include_directories(roller_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+    add_test(NAME roller_tests COMMAND roller_tests)
+endif()

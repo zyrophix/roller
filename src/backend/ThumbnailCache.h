@@ -1,7 +1,15 @@
 #pragma once
 #include <QFuture>
 #include <QObject>
+#include <QSize>
 #include <QStringList>
+
+// Height-driven sizing, like `magick -thumbnail xH`: the target is the height
+// and the width follows the source aspect. Sources smaller than the target
+// are never upscaled, and a corrupt header claiming an absurd aspect is
+// clamped. Kept out of the worker so it can be tested - sizing by width
+// instead of height is what made every tile look soft.
+QSize thumbnailSize(const QSize &source, int targetHeight);
 
 class ThumbnailCache : public QObject {
     Q_OBJECT
