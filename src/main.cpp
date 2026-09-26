@@ -52,6 +52,44 @@ static void printUsage() {
         stdout);
 }
 
+// Qt's default message handler produces nothing from this binary when stderr
+// is not a tty, which makes every diagnostic invisible in a launcher log.
+// Writing through stderr ourselves fixes it for our own warnings and for
+// anything Qt itself reports.
+static void rollerMessageHandler(QtMsgType type, const QMessageLogContext &ctx,
+                                 const QString &msg) {
+    Q_UNUSED(ctx);
+    const char *level = "info";
+    switch (type) {
+    case QtDebugMsg:    level = "debug"; break;
+    case QtInfoMsg:     level = "info";  break;
+    case QtWarningMsg:  level = "warn";  break;
+    case QtCriticalMsg: level = "crit";  break;
+    case QtFatalMsg:    level = "fatal"; break;
+    }
+    std::fprintf(stderr, "roller: %s: %s\n", level, qPrintable(msg));
+    std::fflush(stderr);
+    if (type == QtFatalMsg) std::abort();
+}
+
+// Config search order:
+//   1. $XDG_CONFIG_HOME/roller/config.json - the canonical location
+//   2. ../config.json next to the binary - portable tree install, and what a
+//      developer running build/roller from the repo gets
+// The working directory is deliberately NOT searched. It used to be, and a
+// config.json lying in whatever directory the launcher happened to start from
+// silently changed the behaviour, which made it impossible to tell which
+// settings were actually in effect.
+static QStringList configSearchPaths() {
+    QStringList out;
+    out << QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+             .filePath("roller/config.json");
+    const QString sibling =
+        QDir::cleanPath(QDir(QCoreApplication::applicationDirPath()).filePath("../config.json"));
+    if (!out.contains(sibling)) out << sibling;
+    return out;
+}
+
 static QJsonObject loadConfig(const QString &path) {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly)) return {};
@@ -77,6 +115,7 @@ int main(int argc, char *argv[]) {
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setAlphaBufferSize(8);
     QSurfaceFormat::setDefaultFormat(fmt);
+    qInstallMessageHandler(rollerMessageHandler);
     QGuiApplication app(argc, argv);
     app.setApplicationName("roller");
     app.setDesktopFileName("roller");
@@ -115,17 +154,30 @@ int main(int argc, char *argv[]) {
     }
 
     // LayerShell is handled in QML via org.kde.layershell
-    QString appDir = QCoreApplication::applicationDirPath();
-    QString configPath = QDir::cleanPath(QDir(appDir).filePath("../config.json"));
-    if (!QFile::exists(configPath)) configPath = QDir::current().filePath("config.json");
-    if (!QFile::exists(configPath)) configPath = QDir::home().filePath(".config/roller/config.json");
-    QJsonObject cfgObj = loadConfig(configPath);
-    if (cfgObj.isEmpty()) {
-        // defaults
+    QString configPath;
+    for (const QString &candidate : configSearchPaths()) {
+        if (QFile::exists(candidate)) { configPath = candidate; break; }
+    }
+    QJsonObject cfgObj = configPath.isEmpty() ? QJsonObject{} : loadConfig(configPath);
+    if (configPath.isEmpty()) {
+        // never resolve silently: a missing or ignored config is the reason
+        // a setting appears to have no effect
+        std::fprintf(stderr, "roller: no config found, using built-in defaults "
+                             "(looked in %s)\n",
+                     qPrintable(configSearchPaths().join(", ")));
         cfgObj["wallpaper_path"] = QDir::home().filePath("Pictures/Wallpapers");
         cfgObj["cache_path"] = QDir::home().filePath(".cache/roller/thumbs");
         cfgObj["number_of_pictures"] = 5;
         cfgObj["border_color"] = "#b4befe";
+    } else if (cfgObj.isEmpty()) {
+        std::fprintf(stderr, "roller: %s is not valid JSON, using built-in defaults\n",
+                     qPrintable(configPath));
+        cfgObj["wallpaper_path"] = QDir::home().filePath("Pictures/Wallpapers");
+        cfgObj["cache_path"] = QDir::home().filePath(".cache/roller/thumbs");
+        cfgObj["number_of_pictures"] = 5;
+        cfgObj["border_color"] = "#b4befe";
+    } else {
+        std::fprintf(stderr, "roller: config %s\n", qPrintable(configPath));
     }
     auto expandPath = [](QString p) {
         if (p.startsWith("~/")) p.replace(0, 1, QDir::homePath());
@@ -159,6 +211,7 @@ int main(int argc, char *argv[]) {
         thumbCache.generateMissing(repo.getAll());
     });
 
+    const QString appDir = QCoreApplication::applicationDirPath();
     QQmlApplicationEngine engine;
     // two index domains are exposed to QML: wallpaperModel is the filtered
     // proxy, sourceWallpaperModel is the unfiltered list. Calling get_*_at
