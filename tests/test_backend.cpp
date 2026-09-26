@@ -186,5 +186,8 @@ private slots:
     }
 };
 
-QTEST_MAIN(TestBackend)
+// QCoreApplication, not QGuiApplication: nothing here touches QPixmap, QImage
+// or fonts, and a GUI application aborts on a headless machine before the
+// first test runs, which is exactly what CI is.
+QTEST_GUILESS_MAIN(TestBackend)
 #include "test_backend.moc"
