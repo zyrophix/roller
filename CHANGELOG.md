@@ -1,0 +1,49 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Changelog entries were not kept before 0.1.0; the history before that is the
+public repository commit log.
+
+## [Unreleased]
+
+### Fixed
+
+- A still wallpaper now stops a running video wallpaper. The kill sat inside
+  the video branch, so it only fired for video-over-video; `mpvpaper` loops
+  forever and its layer outlives the change underneath, so nothing could take
+  the screen back.
+- A tile no longer shows the previous wallpaper during a slide. Delegate slots
+  are pinned to absolute indices instead of shifting with the rounded centre.
+- `selected_horizontal_scale` and `selected_vertical_scale` are honoured
+  instead of hardcoded values.
+- `border_width` means what it says. The Canvas stroked inside an active clip
+  and lost half the stroke, so 4 looked like 2.
+- Thumbnail sizing is height-driven, matching `-thumbnail xH`, and cached
+  thumbs within 6% of the target are kept rather than regenerated forever.
+- Config resolution no longer searches the working directory, and prints the
+  path it used.
+- `qInfo`/`qWarning` are visible again when stderr is not a terminal.
+
+### Added
+
+- Backends: `awww`, `hyprpaper`, `waypaper`, `swaybg`, `feh`, with `auto`
+  picking the first installed.
+- Video wallpapers through `mpvpaper`, with `ffmpeg` poster frames.
+- Single-instance lock, `--help`, `--version`, `--allow-multiple`.
+- Reopen on the last applied wallpaper (`restore_last`).
+- Unselected tile borders via `idle_border_width` / `idle_border_color`.
+- `stable_copy_path` and `post_apply_command`.
+- Thumbnail cache: orphan collection and a size bound (`cache_max_mb`).
+
+### Changed
+
+- Per-tile `Canvas` replaced by a `Matrix4x4` shear on the GPU.
+- Thumbnail cache is always JPEG, keyed by `md5(absolute path)`.
+- `scripts/cache.sh` removed; the C++ worker does the job.
+
+## [0.1.0]
+
+Initial public release.

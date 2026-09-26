@@ -1,0 +1,13 @@
+{
+  // markdownlint-cli2 config — drydock markdown style rules (docs/04).
+  // Run: npx --yes markdownlint-cli2 "**/*.md"
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": { "siblings_only": true },
+    "MD041": false,
+    "MD059": false,
+    "MD029": false,
+    "MD033": { "allowed_elements": ["video"] }
+  }
+}
