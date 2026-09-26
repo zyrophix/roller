@@ -7,12 +7,10 @@ Pick a wallpaper from the keyboard: browse local files in a centered coverflow c
 
 <video src="https://github.com/user-attachments/assets/29ac2fb7-6548-4c0f-ac7c-2a6e0863d89a" autoplay loop muted playsinline width="900">Demo: stepping through wallpapers in the coverflow carousel with h/l and applying one with Enter</video>
 
-> **Status: 0.x.** No compatibility promise — config keys and rendering have
-> already changed during development and will keep doing so; pin a commit if
-> you depend on exact behaviour. The test suite covers only the pure logic in
-> `src/backend`; rendering, animation and focus behaviour are not covered and
-> have to be checked by hand. `awww` is the only backend exercised on a real
-> desktop; the others are implemented from their documented interfaces.
+> **0.x — expect movement.** Config keys, carousel behaviour and defaults may
+> change without notice until 1.0; that is when they stop. The binary name, the
+> command line flags, the config path and the cache location do not change. Pin
+> a commit if you depend on exact behaviour.
 
 ## Why roller?
 
@@ -32,10 +30,22 @@ Build needs Qt **6.8+** (`Quick`, `Gui`, `Core`, `Concurrent`) and `layer-shell-
 # Arch
 sudo pacman -S qt6-base qt6-declarative layer-shell-qt awww
 
-git clone https://github.com/zyrophix/roller
+git clone https://github.com/zyrophix/roller.git
 cd roller
 cmake -B build -S . && cmake --build build
 sudo install -Dm755 build/roller /usr/local/bin/roller
+```
+
+### Updating
+
+`git pull` does not update an installed copy. The binary is installed by path,
+so a fresh build has to be installed again, and a `roller` that is already
+running keeps serving the old one until you restart it:
+
+```sh
+git pull && cmake --build build
+sudo install -Dm755 build/roller /usr/local/bin/roller
+pkill -x roller
 ```
 
 ## Quickstart
@@ -73,6 +83,10 @@ The resolved config path is printed every launch. A second `roller` exits and re
 
 Press `h` and `l`, or scroll, to move; `Enter` applies.
 
+Applying sets the wallpaper on **the focused monitor only**. A second monitor is
+left alone — open an issue if you need both, it is a missing feature rather
+than a bug, and an issue saying so is what gets it built.
+
 ### Keybinds
 
 | Key | Action |
@@ -108,6 +122,8 @@ Set with `"backend"` in `config.json`:
 
 An unknown or unavailable name falls back to the first installed backend. The name actually used is in the startup log.
 
+`awww` is the only backend exercised on a real desktop. The other three are implemented from their documented interfaces and their commands are correct, but none has been run against a live compositor.
+
 There is no X11 backend. roller needs `wlr-layer-shell`, and no compositor
 providing it draws an X11 root window as the desktop, so `feh` and similar
 could only ever report success and change nothing.
@@ -120,7 +136,7 @@ Hardware decoding is off unless you ask for it — mpv ships with `hwdec=no`, so
 
 `mpvpaper` is started **without** `-f`, so its pid is known and the previous instance can be replaced precisely. Any later wallpaper change stops a running video wallpaper; the match is limited to files under `wallpaper_path`, so an `mpvpaper` you started yourself is untouched.
 
-Video costs CPU. `mpv` defaults to `--hwdec=no`, so decoding happens on the processor; on hardware without a decoder for the codec — 4K AV1 on AMD Vega, for instance — this can pin several cores.
+Video costs CPU. Where the GPU has no decoder for the codec — 4K AV1 on AMD Vega, for instance — `auto` falls back to software and can still pin several cores.
 
 ### Configuration
 
