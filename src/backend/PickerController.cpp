@@ -28,7 +28,7 @@ void PickerController::applyWallpaper(const QString &path){
                               cfg->transitionType(), cfg->transitionPos(),
                               cfg->transitionDuration(), cfg->transitionFps(),
                               cfg->videoExtensions(), cfg->stableCopyPath(),
-                              cfg->postApplyCommand());
+                              cfg->postApplyCommand(), repo ? repo->path() : QString());
     } else {
         r.error = QStringLiteral("backend not initialised");
     }

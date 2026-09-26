@@ -84,7 +84,36 @@ void killPreviousSwaybg() {
 }
 
 // same for mpvpaper, see the video branch for why -f must not be used
-static qint64 s_mpvpaperPid = 0;
+// A running video wallpaper has to be stopped by any later apply, not just by
+// another video. mpvpaper loops forever and its layer outlives the change
+// awww makes underneath, so applying a still image left the video on screen
+// with no way back off it.
+//
+// Matching is scoped to files under wallpaperDir on purpose: that reclaims a
+// video wallpaper left behind by an earlier roller run, whose pid this
+// process never knew, while leaving an mpvpaper the user started for some
+// unrelated purpose alone.
+void stopVideoWallpaper(const QString &wallpaperDir) {
+    if (wallpaperDir.isEmpty()) return;
+    const QString prefix = QDir(wallpaperDir).absolutePath() + QLatin1Char('/');
+    const QString kill = QStandardPaths::findExecutable("kill");
+    if (kill.isEmpty()) return;
+    const QStringList procs = QDir(QStringLiteral("/proc")).entryList(
+        QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString &entry : procs) {
+        QFile cmdline(QStringLiteral("/proc/") + entry + QStringLiteral("/cmdline"));
+        if (!cmdline.open(QIODevice::ReadOnly)) continue;
+        bool isMpvpaper = false, underWallpaperDir = false;
+        for (const QByteArray &a : cmdline.readAll().split('\0')) {
+            if (a.isEmpty()) continue;
+            const QString arg = QString::fromLocal8Bit(a);
+            if (QFileInfo(arg).fileName() == QLatin1String("mpvpaper")) isMpvpaper = true;
+            else if (arg.startsWith(prefix)) underWallpaperDir = true;
+        }
+        if (isMpvpaper && underWallpaperDir)
+            QProcess::startDetached(kill, {QStringLiteral("-TERM"), entry});
+    }
+}
 
 QString runAndCapture(const QString &bin, const QStringList &args, int timeoutMs = 2000) {
     QProcess p;
@@ -197,13 +226,21 @@ ApplyResult applyWallpaper(const QString &path,
                            int transitionFps,
                            const QStringList &videoExtensions,
                            const QString &stableCopyPath,
-                           const QString &postApplyCommand) {
+                           const QString &postApplyCommand,
+                           const QString &wallpaperDir) {
     ApplyResult r;
     r.backend = backendName(backend);
     if (path.isEmpty() || !QFileInfo::exists(path)) {
         r.error = QStringLiteral("wallpaper not found");
         return r;
     }
+
+    // A running video wallpaper must be stopped by any later apply, not just
+    // by another video. mpvpaper loops forever and its layer outlives the
+    // change awww makes underneath, so applying a still image left the video
+    // on screen with no way back off it. The kill used to sit inside the
+    // video branch, so only video-over-video was covered.
+    stopVideoWallpaper(wallpaperDir);
 
     // Video always goes through mpvpaper, whatever the configured backend is
     if (isVideoFile(path, videoExtensions)) {
@@ -221,16 +258,8 @@ ApplyResult applyWallpaper(const QString &path,
         // No -f. With it mpvpaper forks, so the pid startDetached returns
         // belongs to a parent that exits at once and the real player is
         // reparented to init: players then pile up, each software-decoding
-        // 4K AV1 at several hundred percent CPU. Without the fork the pid is
-        // the actual process, so it can be replaced precisely and an mpvpaper
-        // the user started themselves is left alone.
-        if (s_mpvpaperPid > 0) {
-            QProcess::startDetached(QStringLiteral("kill"),
-                                    {QStringLiteral("-TERM"), QString::number(s_mpvpaperPid)});
-            s_mpvpaperPid = 0;
-        }
-        r.ok = run(mpvpaper, {"-o", "no-audio loop", monitor, path}, &r.error,
-                   &s_mpvpaperPid);
+        // 4K AV1 at several hundred percent CPU.
+        r.ok = run(mpvpaper, {"-o", "no-audio loop", monitor, path}, &r.error);
         if (!r.ok) return r;
         return finish(path, r, stableCopyPath, postApplyCommand);
     }

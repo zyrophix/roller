@@ -40,4 +40,5 @@ ApplyResult applyWallpaper(const QString &path,
                            int transitionFps,
                            const QStringList &videoExtensions,
                            const QString &stableCopyPath,
-                           const QString &postApplyCommand);
+                           const QString &postApplyCommand,
+                           const QString &wallpaperDir = {});

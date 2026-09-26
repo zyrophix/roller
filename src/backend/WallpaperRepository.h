@@ -13,6 +13,7 @@ public:
     void setVideoExtensions(const QStringList &exts) { videoExts = exts; }
     void refresh();
     QStringList getAll() const; // absolute paths
+    QString path() const { return dir; }
 
 private:
     QString dir;
