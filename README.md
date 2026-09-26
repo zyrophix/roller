@@ -11,15 +11,14 @@ Pick a wallpaper from the keyboard: browse local files in a centered coverflow c
 > already changed during development and will keep doing so; pin a commit if
 > you depend on exact behaviour. There is no test suite yet, so bugs are
 > found by hand. `awww` is the only backend exercised on a real desktop; the
-> others are implemented from their documented interfaces, and `feh` does
-> nothing under a Wayland compositor.
+> others are implemented from their documented interfaces.
 
 ## Why roller?
 
 | What you need | roller | Alternative |
 |---|---|---|
 | "flip through wallpapers fast" | GPU coverflow, `h`/`l` and wheel, no reload | file manager, or right-clicking the desktop |
-| "work with the daemon I already run" | `awww`, `hyprpaper`, `waypaper`, `swaybg`, `feh`, video via `mpvpaper` | one daemon, or a per-desktop script |
+| "work with the daemon I already run" | `awww`, `hyprpaper`, `waypaper`, `swaybg`, video via `mpvpaper` | one daemon, or a per-desktop script |
 | "keep it small and hackable" | ~600 KB, one C++ binary, one JSON file | a shell component needing a Quickshell install |
 
 ## Install
@@ -105,9 +104,12 @@ Set with `"backend"` in `config.json`:
 | `hyprpaper` | `hyprpaper` daemon | Hyprland native, via `hyprctl` |
 | `waypaper` | `waypaper` | |
 | `swaybg` | `swaybg` | roller replaces the instance it started on the next change |
-| `feh` | `feh` | **X11 only** — sets the X root window that a Wayland compositor draws over, so under Hyprland it reports success and changes nothing |
 
 An unknown or unavailable name falls back to the first installed backend. The name actually used is in the startup log.
+
+There is no X11 backend. roller needs `wlr-layer-shell`, and no compositor
+providing it draws an X11 root window as the desktop, so `feh` and similar
+could only ever report success and change nothing.
 
 ### Video wallpapers
 

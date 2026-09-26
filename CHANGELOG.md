@@ -23,15 +23,14 @@ Known limitations at this release:
 - No automated tests. Rendering, animation and delegate recycling are
   verified by hand only.
 - `awww` is the only backend exercised on a real desktop. `hyprpaper`,
-  `waypaper`, `swaybg` and `feh` are implemented from their documented
-  interfaces; `feh` is X11-only and does nothing under a Wayland compositor.
+  `waypaper` and `swaybg` are implemented from their documented interfaces.
 - The video path is implemented but lightly exercised. Decoding cost depends
   entirely on hardware support for the codec.
 
 ### Added
 
-- Backends: `awww`, `hyprpaper`, `waypaper`, `swaybg`, `feh`, with `auto`
-  picking the first installed.
+- Backends: `awww`, `hyprpaper`, `waypaper`, `swaybg`, with `auto` picking
+  the first installed.
 - Video wallpapers through `mpvpaper`, with `ffmpeg` poster frames.
 - Single-instance lock, `--help`, `--version`, `--allow-multiple`.
 - Reopen on the last applied wallpaper (`restore_last`).

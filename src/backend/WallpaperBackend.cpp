@@ -22,7 +22,6 @@ const BackendSpec kSpecs[] = {
     { WallpaperBackend::Hyprpaper, "hyprpaper", "hyprctl" },
     { WallpaperBackend::Waypaper,  "waypaper",  "waypaper" },
     { WallpaperBackend::Swaybg,    "swaybg",    "swaybg" },
-    { WallpaperBackend::Feh,       "feh",       "feh" },
 };
 
 const BackendSpec &specFor(WallpaperBackend b) {
@@ -46,7 +45,6 @@ QString binaryPath(WallpaperBackend b) {
     case WallpaperBackend::Hyprpaper: return QStandardPaths::findExecutable("hyprctl");
     case WallpaperBackend::Waypaper:  return QStandardPaths::findExecutable("waypaper");
     case WallpaperBackend::Swaybg:    return QStandardPaths::findExecutable("swaybg");
-    case WallpaperBackend::Feh:       return QStandardPaths::findExecutable("feh");
     }
     return {};
 }
@@ -307,12 +305,6 @@ ApplyResult applyWallpaper(const QString &path,
         r.ok = run(bin, {"-i", path, "-m", "fill"}, &r.error, &s_swaybgPid);
         break;
     }
-    case WallpaperBackend::Feh:
-        // X11 / XWayland only, not truly Wayland-native: it sets the X root
-        // window, which a Wayland compositor draws over. It reports success
-        // and changes nothing, so the README calls this out.
-        r.ok = run(binaryPath(backend), {"--bg-fill", path}, &r.error);
-        break;
     }
 
     if (!r.ok) return r;

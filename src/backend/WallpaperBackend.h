@@ -3,17 +3,19 @@
 #include <QStringList>
 
 // Static-image wallpaper backends. `swww` is the former name of `awww`, so
-// both resolve to the same binary.
+// both resolve to the same binary. There is deliberately no X11 backend: roller
+// requires a wlr-layer-shell compositor, and none of those render an X11 root
+// window as a desktop, so such a backend could only ever silently do nothing.
 enum class WallpaperBackend {
-    Awww, Hyprpaper, Waypaper, Swaybg, Feh
+    Awww, Hyprpaper, Waypaper, Swaybg
 };
 
 // Backends in the order `auto` tries them.
 QList<WallpaperBackend> availableBackends();
 // Resolve a config value ("auto", "awww", "swww", "hyprpaper", "waypaper",
-// "swaybg", "feh"). An unknown or unavailable name falls back to the first
-// available backend, and `resolved` is set to the canonical name so QML can
-// tell the user what actually got used.
+// "swaybg"). An unknown or unavailable name falls back to the first available
+// backend, and `resolved` is set to the canonical name so QML can tell the
+// user what actually got used.
 WallpaperBackend resolveBackend(const QString &name, QString *resolved = nullptr);
 QString backendName(WallpaperBackend b);
 

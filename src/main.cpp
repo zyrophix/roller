@@ -43,7 +43,7 @@ static void printUsage() {
         "then ~/.config/roller/config.json.\n"
         "\n"
         "Backends (\"backend\" in config.json): auto, awww, swww, hyprpaper,\n"
-        "waypaper, swaybg, feh. Video files always go through mpvpaper.\n"
+        "waypaper, swaybg. Video files always go through mpvpaper.\n"
         "\n"
         "Keys: h/l or Left/Right step, d/u jump a page, / or Ctrl+F search,\n"
         "Enter apply, Esc close, wheel and drag to scroll, click to select or apply.\n"
