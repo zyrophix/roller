@@ -39,8 +39,9 @@ static void printUsage() {
         "  -v, --version        print the version and exit\n"
         "      --allow-multiple do not enforce the single-instance lock\n"
         "\n"
-        "Config is read from ../config.json next to the binary, then ./config.json,\n"
-        "then ~/.config/roller/config.json.\n"
+        "Config is read from $XDG_CONFIG_HOME/roller/config.json, then\n"
+        "../config.json next to the binary. The working directory is not\n"
+        "searched, so a stray config.json cannot silently change behaviour.\n"
         "\n"
         "Backends (\"backend\" in config.json): auto, awww, swww, hyprpaper,\n"
         "waypaper, swaybg. Video files always go through mpvpaper.\n"
@@ -111,6 +112,17 @@ int main(int argc, char *argv[]) {
                      qPrintable(a));
         return 1;
     }
+
+    // Checked before QGuiApplication: this is a compile-time constant, and
+    // constructing a QGuiApplication on a machine with no display aborts with
+    // Qt's own platform error, which hides the explanation entirely. --version
+    // and --help already returned above, so they still work.
+#ifndef HAS_LAYER_SHELL
+    std::fprintf(stderr,
+                 "roller: built without layer-shell-qt, so it cannot open a layer "
+                 "surface. This build is for CI and is not usable.\n");
+    return 1;
+#endif
 
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setAlphaBufferSize(8);

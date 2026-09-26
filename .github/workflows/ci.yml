@@ -15,7 +15,10 @@ jobs:
           version: '6.8.*'
           cache: true
       - name: Configure
-        run: cmake -B build -S . -G Ninja
+        # Ubuntu packages layer-shell-qt on 22.04 only, and the runner is
+        # newer. The opt-out is explicit so the resulting warning is in the log
+        # rather than the dependency being silently missing.
+        run: cmake -B build -S . -G Ninja -DROLLER_ALLOW_NO_LAYER_SHELL=ON
       - name: Lint QML
         run: cmake --build build --target all_qmllint
       - name: Build

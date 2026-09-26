@@ -14,7 +14,24 @@ include(GNUInstallDirs)
 find_package(Qt6 6.8 REQUIRED COMPONENTS Quick Gui Core Concurrent)
 qt_standard_project_setup(REQUIRES 6.8)
 
+# layer-shell-qt is not optional in practice: Main.qml imports
+# org.kde.layershell unconditionally and there is no fallback window type, so a
+# binary built without it can answer --version and then exits 1 on a real run.
+# Ubuntu only packages it on 22.04, which is why CI opts out explicitly instead
+# of the dependency being silently absent.
+option(ROLLER_ALLOW_NO_LAYER_SHELL "Build a binary that cannot open a layer surface. CI only." OFF)
 find_package(LayerShellQt QUIET)
+if(NOT LayerShellQt_FOUND AND NOT ROLLER_ALLOW_NO_LAYER_SHELL)
+    message(FATAL_ERROR
+        "layer-shell-qt not found, and roller requires it: it is a "
+        "wlr-layer-shell overlay and will not start without it. "
+        "On Arch: pacman -S layer-shell-qt")
+endif()
+if(NOT LayerShellQt_FOUND)
+    message(WARNING
+        "layer-shell-qt not found. The binary will compile but cannot run. "
+        "Expected in CI and nowhere else.")
+endif()
 
 qt_add_executable(roller
     src/main.cpp
