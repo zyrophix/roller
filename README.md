@@ -2,7 +2,7 @@
 
 Pick a wallpaper from the keyboard: browse local files in a centered coverflow carousel, search by name, apply through whichever daemon you already run.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/zyrophix/roller/ci.yml/status.svg)](https://github.com/zyrophix/roller/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/zyrophix/roller/ci.yml)](https://github.com/zyrophix/roller/actions)
 [![Release](https://img.shields.io/github/v/release/zyrophix/roller)](https://github.com/zyrophix/roller/releases)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
