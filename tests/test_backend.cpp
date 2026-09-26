@@ -121,7 +121,12 @@ private slots:
     void unknownBackendFallsBack() {
         QString resolved;
         const auto chosen = resolveBackend(QStringLiteral("feh"), &resolved);
-        QVERIFY(availableBackends().contains(chosen));
+        // On a machine with no wallpaper daemon installed the documented
+        // fallback is awww; otherwise it is the first one available. Asserting
+        // only the second form is what used to fail in CI, where no daemon
+        // exists and the list is empty.
+        const auto list = availableBackends();
+        QCOMPARE(chosen, list.isEmpty() ? WallpaperBackend::Awww : list.first());
         QCOMPARE(resolved, backendName(chosen));
     }
 
