@@ -7,6 +7,13 @@ Pick a wallpaper from the keyboard: browse local files in a centered coverflow c
 
 ![roller](assets/demo.png)
 
+> **Status: 0.x.** No compatibility promise — config keys and rendering have
+> already changed during development and will keep doing so; pin a commit if
+> you depend on exact behaviour. There is no test suite yet, so bugs are
+> found by hand. `awww` is the only backend exercised on a real desktop; the
+> others are implemented from their documented interfaces, and `feh` does
+> nothing under a Wayland compositor.
+
 ## Why roller?
 
 | What you need | roller | Alternative |
