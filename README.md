@@ -5,13 +5,14 @@ Pick a wallpaper from the keyboard: browse local files in a centered coverflow c
 [![CI](https://img.shields.io/github/actions/workflow/status/zyrophix/roller/ci.yml/status.svg)](https://github.com/zyrophix/roller/actions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-![roller](assets/demo.png)
+<video src="https://github.com/user-attachments/assets/29ac2fb7-6548-4c0f-ac7c-2a6e0863d89a" autoplay loop muted playsinline width="900">Demo: stepping through wallpapers in the coverflow carousel with h/l and applying one with Enter</video>
 
 > **Status: 0.x.** No compatibility promise — config keys and rendering have
 > already changed during development and will keep doing so; pin a commit if
-> you depend on exact behaviour. There is no test suite yet, so bugs are
-> found by hand. `awww` is the only backend exercised on a real desktop; the
-> others are implemented from their documented interfaces.
+> you depend on exact behaviour. The test suite covers only the pure logic in
+> `src/backend`; rendering, animation and focus behaviour are not covered and
+> have to be checked by hand. `awww` is the only backend exercised on a real
+> desktop; the others are implemented from their documented interfaces.
 
 ## Why roller?
 
@@ -115,6 +116,8 @@ could only ever report success and change nothing.
 
 Files whose extension is in `video_extensions` always go through `mpvpaper`, whatever the configured backend — none of the static-image backends can render video. The focused monitor comes from `hyprctl`, falling back to `swaymsg`.
 
+Hardware decoding is off unless you ask for it — mpv ships with `hwdec=no`, so 4K video would otherwise be decoded in software on the CPU. `video_hwdec` defaults to `auto`, which is mpv's whitelisted alias; a codec your GPU cannot decode falls back to software on its own, so it is safe to leave on. Set it to `""` to keep mpv's default.
+
 `mpvpaper` is started **without** `-f`, so its pid is known and the previous instance can be replaced precisely. Any later wallpaper change stops a running video wallpaper; the match is limited to files under `wallpaper_path`, so an `mpvpaper` you started yourself is untouched.
 
 Video costs CPU. `mpv` defaults to `--hwdec=no`, so decoding happens on the processor; on hardware without a decoder for the codec — 4K AV1 on AMD Vega, for instance — this can pin several cores.
@@ -150,6 +153,7 @@ The working directory is **not** searched, so a stray `config.json` cannot silen
 | `transition_pos` | `0.5,0.5` | awww only |
 | `transition_duration` | `1.2` | awww only, clamped 0–10 |
 | `transition_fps` | `60` | awww only, clamped 1–240 |
+| `video_hwdec` | `auto` | mpv `hwdec` for video wallpapers; `""` keeps mpv's default of no hardware decoding |
 | `stable_copy_path` | `""` | Copy the current wallpaper here for lockscreens or bars |
 | `post_apply_command` | `""` | Shell hook after every change, e.g. `wallust run` |
 | `search_background_color` | `#313244` | |
