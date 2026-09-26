@@ -25,12 +25,11 @@ Pick a wallpaper from the keyboard: browse local files in a centered coverflow c
 
 **Wayland only.** roller draws itself as a `wlr-layer-shell` overlay, so it needs a compositor implementing that protocol — Hyprland, Sway, Wayfire, labwc, niri, river. It will not start on X11; the shell import in `qml/Main.qml` is unconditional and there is no fallback window type.
 
-Build needs Qt **6.8+** (`Quick`, `Gui`, `Core`, `Concurrent`) and `layer-shell-qt`. Runtime needs one backend from the table below. `ffmpeg` is used only for video poster frames, `sh` only for `post_apply_command`. No `jq`, no ImageMagick.
+**Requires:** Qt **6.8+** (`Quick`, `Gui`, `Core`, `Concurrent`), `layer-shell-qt`, and one backend from the table below. `ffmpeg` is used only for video poster frames, `sh` only for `post_apply_command`. No `jq`, no ImageMagick.
 
 ### Arch Linux
 
-The repository ships a `PKGBUILD`, so it installs through pacman and resolves
-its own dependencies:
+The repository ships a `PKGBUILD`, so the dependencies come with it:
 
 ```sh
 git clone https://github.com/zyrophix/roller.git
@@ -38,16 +37,13 @@ cd roller
 makepkg -si
 ```
 
-It is not in the AUR — clone and build, no helper needed. The version comes
-from the git tags, so you get the newest release rather than whatever `main`
-happens to be. Afterwards `roller` is a pacman package, so `pacman -R roller`
-removes it.
+`roller` then lives under pacman's management, so `pacman -R roller` removes it.
 
-### Any distribution
+### From source
+
+Everything else:
 
 ```sh
-sudo pacman -S qt6-base qt6-declarative layer-shell-qt awww   # or your distro's equivalents
-
 git clone https://github.com/zyrophix/roller.git
 cd roller
 cmake -B build -S . && cmake --build build
@@ -55,8 +51,12 @@ sudo install -Dm755 build/roller /usr/local/bin/roller
 ```
 
 A plain clone gives you `main`. To pin a release, clone the tag instead —
-`git clone --branch v0.1.0 https://github.com/zyrophix/roller.git` — or pick a
+`git clone --branch v0.1.0 https://github.com/zyrophix/roller.git` — or take a
 version from [releases](https://github.com/zyrophix/roller/releases).
+
+Package names differ per distribution. `layer-shell-qt` is the one to check
+first: it is not packaged everywhere, and without it the build still succeeds
+and the binary then refuses to start, which is a confusing way to find out.
 
 ### Updating
 
