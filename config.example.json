@@ -19,6 +19,7 @@
     "transition_fps": 60,
     "backend": "auto",
     "video_extensions": ["mp4", "webm", "mov", "avi", "mkv", "gif", "m4v", "flv", "wmv", "mpeg", "3gp"],
+    "video_hwdec": "auto",
     "stable_copy_path": "",
     "post_apply_command": "",
     "idle_border_width": 2,

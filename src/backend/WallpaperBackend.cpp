@@ -216,19 +216,10 @@ QString focusedMonitor() {
     return {};
 }
 
-ApplyResult applyWallpaper(const QString &path,
-                           WallpaperBackend backend,
-                           const QString &transitionType,
-                           const QString &transitionPos,
-                           double transitionDuration,
-                           int transitionFps,
-                           const QStringList &videoExtensions,
-                           const QString &stableCopyPath,
-                           const QString &postApplyCommand,
-                           const QString &wallpaperDir) {
+ApplyResult applyWallpaper(const WallpaperRequest &req) {
     ApplyResult r;
-    r.backend = backendName(backend);
-    if (path.isEmpty() || !QFileInfo::exists(path)) {
+    r.backend = backendName(req.backend);
+    if (req.path.isEmpty() || !QFileInfo::exists(req.path)) {
         r.error = QStringLiteral("wallpaper not found");
         return r;
     }
@@ -238,10 +229,10 @@ ApplyResult applyWallpaper(const QString &path,
     // change awww makes underneath, so applying a still image left the video
     // on screen with no way back off it. The kill used to sit inside the
     // video branch, so only video-over-video was covered.
-    stopVideoWallpaper(wallpaperDir);
+    stopVideoWallpaper(req.wallpaperDir);
 
     // Video always goes through mpvpaper, whatever the configured backend is
-    if (isVideoFile(path, videoExtensions)) {
+    if (isVideoFile(req.path, req.videoExtensions)) {
         const QString mpvpaper = QStandardPaths::findExecutable("mpvpaper");
         if (mpvpaper.isEmpty()) {
             r.error = QStringLiteral("mpvpaper is required for video wallpapers");
@@ -257,27 +248,32 @@ ApplyResult applyWallpaper(const QString &path,
         // belongs to a parent that exits at once and the real player is
         // reparented to init: players then pile up, each software-decoding
         // 4K AV1 at several hundred percent CPU.
-        r.ok = run(mpvpaper, {"-o", "no-audio loop", monitor, path}, &r.error);
+        QString opts = QStringLiteral("no-audio loop");
+        // mpv ships with hwdec=no, so video wallpapers decode in software
+        // unless asked otherwise. `auto` is the whitelisted alias; a codec
+        // the GPU cannot handle falls back to software on its own.
+        if (!req.videoHwdec.isEmpty()) opts += QStringLiteral(" hwdec=") + req.videoHwdec;
+        r.ok = run(mpvpaper, {"-o", opts, monitor, req.path}, &r.error);
         if (!r.ok) return r;
-        return finish(path, r, stableCopyPath, postApplyCommand);
+        return finish(req.path, r, req.stableCopyPath, req.postApplyCommand);
     }
 
-    switch (backend) {
+    switch (req.backend) {
     case WallpaperBackend::Awww: {
         const QString bin = findAwww();
         if (bin.isEmpty()) { r.error = QStringLiteral("awww not found"); return r; }
         // never pass raw config text as flags
-        const QString t = kOkTransitions.contains(transitionType) ? transitionType
-                                                                  : QStringLiteral("grow");
-        const QStringList xy = transitionPos.split(',');
+        const QString t = kOkTransitions.contains(req.transitionType) ? req.transitionType
+                                                                     : QStringLiteral("grow");
+        const QStringList xy = req.transitionPos.split(',');
         bool okX = false, okY = false;
         const double x = xy.value(0).toDouble(&okX), y = xy.value(1).toDouble(&okY);
         const QString pos = (okX && okY) ? QStringLiteral("%1,%2").arg(x).arg(y)
                                          : QStringLiteral("0.5,0.5");
-        const double d = std::isfinite(transitionDuration)
-                       ? qBound(0.0, transitionDuration, 10.0) : 1.2;
-        const int f = transitionFps > 0 ? qMin(transitionFps, 240) : 60;
-        r.ok = run(bin, {"img", path,
+        const double d = std::isfinite(req.transitionDuration)
+                       ? qBound(0.0, req.transitionDuration, 10.0) : 1.2;
+        const int f = req.transitionFps > 0 ? qMin(req.transitionFps, 240) : 60;
+        r.ok = run(bin, {"img", req.path,
                          "--transition-type", t,
                          "--transition-pos", pos,
                          "--transition-duration", QString::number(d),
@@ -285,29 +281,29 @@ ApplyResult applyWallpaper(const QString &path,
         break;
     }
     case WallpaperBackend::Hyprpaper: {
-        const QString hyprctl = binaryPath(backend);
+        const QString hyprctl = binaryPath(req.backend);
         if (hyprctl.isEmpty()) { r.error = QStringLiteral("hyprctl not found"); return r; }
         // preload first so the wallpaper appears without a decode stall
-        if (!run(hyprctl, {"hyprpaper", "preload", path}, &r.error)) return r;
-        r.ok = run(hyprctl, {"hyprpaper", "wallpaper", QChar(',') + path}, &r.error);
+        if (!run(hyprctl, {"hyprpaper", "preload", req.path}, &r.error)) return r;
+        r.ok = run(hyprctl, {"hyprpaper", "wallpaper", QChar(',') + req.path}, &r.error);
         break;
     }
     case WallpaperBackend::Waypaper:
-        r.ok = run(binaryPath(backend), {"--wallpaper", path}, &r.error);
+        r.ok = run(binaryPath(req.backend), {"--wallpaper", req.path}, &r.error);
         break;
     case WallpaperBackend::Swaybg: {
-        const QString bin = binaryPath(backend);
+        const QString bin = binaryPath(req.backend);
         if (bin.isEmpty()) { r.error = QStringLiteral("swaybg not found"); return r; }
         killPreviousSwaybg();
         // swaybg stays in the foreground by design; startDetached is what
         // keeps it alive without blocking us, and we need its pid to replace
         // it on the next change
-        r.ok = run(bin, {"-i", path, "-m", "fill"}, &r.error, &s_swaybgPid);
+        r.ok = run(bin, {"-i", req.path, "-m", "fill"}, &r.error, &s_swaybgPid);
         break;
     }
     }
 
     if (!r.ok) return r;
 
-    return finish(path, r, stableCopyPath, postApplyCommand);
+    return finish(req.path, r, req.stableCopyPath, req.postApplyCommand);
 }

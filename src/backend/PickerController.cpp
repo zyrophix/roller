@@ -23,12 +23,19 @@ void PickerController::setSearch(const QString &q){
 void PickerController::applyWallpaper(const QString &path){
     ApplyResult r;
     if (model && cfg) {
-        r = ::applyWallpaper(path,
-                              ::resolveBackend(cfg->backend()),
-                              cfg->transitionType(), cfg->transitionPos(),
-                              cfg->transitionDuration(), cfg->transitionFps(),
-                              cfg->videoExtensions(), cfg->stableCopyPath(),
-                              cfg->postApplyCommand(), repo ? repo->path() : QString());
+        WallpaperRequest req;
+        req.path = path;
+        req.backend = ::resolveBackend(cfg->backend());
+        req.transitionType = cfg->transitionType();
+        req.transitionPos = cfg->transitionPos();
+        req.transitionDuration = cfg->transitionDuration();
+        req.transitionFps = cfg->transitionFps();
+        req.videoExtensions = cfg->videoExtensions();
+        req.videoHwdec = cfg->videoHwdec();
+        req.stableCopyPath = cfg->stableCopyPath();
+        req.postApplyCommand = cfg->postApplyCommand();
+        req.wallpaperDir = repo ? repo->path() : QString();
+        r = ::applyWallpaper(req);
     } else {
         r.error = QStringLiteral("backend not initialised");
     }

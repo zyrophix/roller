@@ -34,13 +34,21 @@ struct ApplyResult {
     QString error;        // human readable reason when !ok
 };
 
-ApplyResult applyWallpaper(const QString &path,
-                           WallpaperBackend backend,
-                           const QString &transitionType,
-                           const QString &transitionPos,
-                           double transitionDuration,
-                           int transitionFps,
-                           const QStringList &videoExtensions,
-                           const QString &stableCopyPath,
-                           const QString &postApplyCommand,
-                           const QString &wallpaperDir = {});
+// Everything one apply needs. A parameter list this long made the call site in
+// PickerController unreadable and hid which values were actually optional.
+struct WallpaperRequest {
+    QString path;
+    WallpaperBackend backend = WallpaperBackend::Awww;
+    QString transitionType;
+    QString transitionPos;
+    double transitionDuration = 1.2;
+    int transitionFps = 60;
+    QStringList videoExtensions;
+    // mpv --hwdec value. Empty leaves mpv's own default (no hw decoding).
+    QString videoHwdec;
+    QString stableCopyPath;
+    QString postApplyCommand;
+    QString wallpaperDir;
+};
+
+ApplyResult applyWallpaper(const WallpaperRequest &req);

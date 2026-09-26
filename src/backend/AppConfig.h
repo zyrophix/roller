@@ -31,6 +31,7 @@ class AppConfig : public QObject {
     Q_PROPERTY(QString transitionPos READ transitionPos NOTIFY changed)
     Q_PROPERTY(double transitionDuration READ transitionDuration NOTIFY changed)
     Q_PROPERTY(int transitionFps READ transitionFps NOTIFY changed)
+    Q_PROPERTY(QString videoHwdec READ videoHwdec NOTIFY changed)
 public:
     explicit AppConfig(const QJsonObject &data, QObject *parent=nullptr);
     QString borderColor() const { return obj.value("border_color").toString("#b4befe"); }
@@ -74,6 +75,10 @@ public:
         return out;
     }
     QString stableCopyPath() const { return obj.value("stable_copy_path").toString(); }
+    // mpv hwdec for video wallpapers. "auto" is mpv's whitelisted alias and
+    // falls back to software per codec; an empty string leaves mpv at its own
+    // default, which is no hardware decoding at all.
+    QString videoHwdec() const { return obj.value("video_hwdec").toString("auto"); }
     QString postApplyCommand() const { return obj.value("post_apply_command").toString(); }
     // canonical name of the backend that will actually be used
     QString backendName() const;
