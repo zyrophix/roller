@@ -3,6 +3,7 @@
 Pick a wallpaper from the keyboard: browse local files in a centered coverflow carousel, search by name, apply through whichever daemon you already run.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/zyrophix/roller/ci.yml/status.svg)](https://github.com/zyrophix/roller/actions)
+[![Release](https://img.shields.io/github/v/release/zyrophix/roller)](https://github.com/zyrophix/roller/releases)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 <video src="https://github.com/user-attachments/assets/29ac2fb7-6548-4c0f-ac7c-2a6e0863d89a" autoplay loop muted playsinline width="900">Demo: stepping through wallpapers in the coverflow carousel with h/l and applying one with Enter</video>

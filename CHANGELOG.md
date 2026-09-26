@@ -37,8 +37,16 @@ Known limitations at this release:
 - Unselected tile borders via `idle_border_width` / `idle_border_color`.
 - `stable_copy_path` and `post_apply_command`.
 - Thumbnail cache: orphan collection and a size bound (`cache_max_mb`).
+- `video_hwdec` for video wallpapers. mpv ships with `hwdec=no`, so video was
+  decoded in software unless the user already knew to put `hwdec` in
+  `mpv.conf`. Defaults to `auto`, which falls back per codec.
 
 ### Fixed
+
+- A search query no longer leaves the previous wallpaper and label on tiles
+  whose index did not move. The proxy bumped its revision only on
+  `dataChanged`, `modelReset` and `layoutChanged`, and a refilter emits
+  neither.
 
 - A still wallpaper now stops a running video wallpaper. The kill sat inside
   the video branch, so it only fired for video-over-video; `mpvpaper` loops
@@ -55,6 +63,13 @@ Known limitations at this release:
 - Config resolution no longer searches the working directory, and prints the
   path it used.
 - `qInfo`/`qWarning` are visible again when stderr is not a terminal.
+- The test suite runs at all outside a desktop session. `QTEST_MAIN` builds a
+  `QGuiApplication`, which aborted on a headless machine before the first
+  test, so CI had never actually executed it. It is now `QCoreApplication`,
+  which is all these tests ever needed.
+- A test stopped asserting that the machine has a wallpaper daemon installed.
+  It passed locally and failed on the runner, and it was reporting the
+  environment rather than the code.
 
 ### Changed
 
@@ -64,3 +79,5 @@ Known limitations at this release:
 - Config is read from `$XDG_CONFIG_HOME/roller/config.json` first, then next
   to the binary. An installed binary in `~/.local/bin` previously fell through
   to a stale config and ignored the working tree's.
+- `applyWallpaper` takes a `WallpaperRequest` instead of ten positional
+  parameters. No behaviour change; the call site had stopped being readable.
